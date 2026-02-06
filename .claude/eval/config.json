@@ -1,0 +1,11 @@
+{
+  "version": "2.0.0",
+  "project": "dendrite",
+  "fast_sample_percent": 10,
+  "fast_seed_strategy": "date",
+  "timeout_seconds": 30,
+  "parallel": false,
+  "always_run_tags": ["critical"],
+  "regression_alert_threshold": 0.10,
+  "log_retention_days": 30
+}

@@ -1,0 +1,441 @@
+{
+  "version": "2.0.0",
+  "project": "dendrite",
+  "config": {
+    "fast_sample_percent": 10,
+    "fast_seed_strategy": "date",
+    "timeout_seconds": 30,
+    "parallel": false,
+    "log_dir": ".claude/eval/results",
+    "detail_log_dir": ".claude/eval/logs"
+  },
+  "tasks": [
+    {
+      "id": "shell-001",
+      "name": "install-script-syntax",
+      "description": "install.sh must have valid bash syntax",
+      "tags": ["shell", "critical"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "command_exit_code",
+            "target": "bash -n install.sh",
+            "expected": "0",
+            "message": "install.sh has bash syntax errors"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shell-002",
+      "name": "install-script-set-e",
+      "description": "install.sh must use set -e for fail-fast behavior",
+      "tags": ["shell", "critical", "safety"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_contains",
+            "target": "install.sh",
+            "pattern": "set -e",
+            "expected": true,
+            "message": "install.sh missing 'set -e' - script won't fail on errors"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shell-003",
+      "name": "install-script-shebang",
+      "description": "install.sh must have proper shebang line",
+      "tags": ["shell"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "command_output",
+            "target": "head -1 install.sh",
+            "pattern": "#!/bin/bash",
+            "expected": true,
+            "message": "install.sh missing #!/bin/bash shebang"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shell-004",
+      "name": "install-script-executable",
+      "description": "install.sh should be executable",
+      "tags": ["shell"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "command_exit_code",
+            "target": "test -x install.sh",
+            "expected": "0",
+            "message": "install.sh is not executable (chmod +x install.sh)"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shell-005",
+      "name": "install-script-macos-check",
+      "description": "install.sh must check for macOS before proceeding",
+      "tags": ["shell", "safety"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_contains",
+            "target": "install.sh",
+            "pattern": "darwin",
+            "expected": true,
+            "message": "install.sh missing macOS detection - could run on unsupported OS"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shell-006",
+      "name": "install-script-homebrew-check",
+      "description": "install.sh must verify Homebrew is installed",
+      "tags": ["shell", "safety"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_contains",
+            "target": "install.sh",
+            "pattern": "brew",
+            "expected": true,
+            "message": "install.sh missing Homebrew check"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shell-007",
+      "name": "install-script-backup-function",
+      "description": "install.sh must have backup_config function for safety",
+      "tags": ["shell", "safety", "critical"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_contains",
+            "target": "install.sh",
+            "pattern": "backup_config",
+            "expected": true,
+            "message": "install.sh missing backup_config - could overwrite user configs without backup"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shell-008",
+      "name": "install-script-version-defined",
+      "description": "install.sh must define DENDRITE_VERSION",
+      "tags": ["shell"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_contains",
+            "target": "install.sh",
+            "pattern": "DENDRITE_VERSION=",
+            "expected": true,
+            "message": "install.sh missing DENDRITE_VERSION variable"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shell-009",
+      "name": "install-script-all-12-tools",
+      "description": "install.sh must reference all 12 tools in the stack",
+      "tags": ["shell", "completeness"],
+      "difficulty": "medium",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-tools-completeness.sh"
+      }
+    },
+    {
+      "id": "config-001",
+      "name": "ghostty-config-valid",
+      "description": "Ghostty config file must exist and not be empty",
+      "tags": ["config", "critical"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_exists",
+            "target": "configs/ghostty/config",
+            "expected": true,
+            "message": "configs/ghostty/config is missing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "config-002",
+      "name": "starship-toml-valid",
+      "description": "Starship config must be valid TOML",
+      "tags": ["config", "critical"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_exists",
+            "target": "configs/starship/starship.toml",
+            "expected": true,
+            "message": "configs/starship/starship.toml is missing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "config-003",
+      "name": "lazygit-yaml-valid",
+      "description": "Lazygit config must be valid YAML",
+      "tags": ["config", "critical"],
+      "difficulty": "easy",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-yaml-valid.sh"
+      }
+    },
+    {
+      "id": "html-001",
+      "name": "index-html-exists",
+      "description": "Landing page HTML must exist",
+      "tags": ["html", "critical"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_exists",
+            "target": "index.html",
+            "expected": true,
+            "message": "index.html landing page is missing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "html-002",
+      "name": "html-tag-balance",
+      "description": "HTML must have balanced opening/closing tags",
+      "tags": ["html"],
+      "difficulty": "medium",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-html-balance.sh"
+      }
+    },
+    {
+      "id": "html-003",
+      "name": "html-meta-tags",
+      "description": "index.html must have essential meta tags (charset, viewport, description)",
+      "tags": ["html", "seo"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_contains",
+            "target": "index.html",
+            "pattern": "charset=\"UTF-8\"",
+            "expected": true,
+            "message": "index.html missing charset meta tag"
+          },
+          {
+            "type": "file_contains",
+            "target": "index.html",
+            "pattern": "viewport",
+            "expected": true,
+            "message": "index.html missing viewport meta tag"
+          },
+          {
+            "type": "file_contains",
+            "target": "index.html",
+            "pattern": "meta name=\"description\"",
+            "expected": true,
+            "message": "index.html missing description meta tag"
+          }
+        ]
+      }
+    },
+    {
+      "id": "html-004",
+      "name": "html-no-broken-nav-anchors",
+      "description": "All nav anchor hrefs must point to existing section IDs",
+      "tags": ["html"],
+      "difficulty": "medium",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-nav-anchors.sh"
+      }
+    },
+    {
+      "id": "docs-001",
+      "name": "readme-exists",
+      "description": "README.md must exist at project root",
+      "tags": ["docs", "critical"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_exists",
+            "target": "README.md",
+            "expected": true,
+            "message": "README.md is missing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "docs-002",
+      "name": "all-docs-exist",
+      "description": "All documentation files must exist",
+      "tags": ["docs"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_exists",
+            "target": "docs/getting-started.md",
+            "expected": true,
+            "message": "docs/getting-started.md is missing"
+          },
+          {
+            "type": "file_exists",
+            "target": "docs/architecture.md",
+            "expected": true,
+            "message": "docs/architecture.md is missing"
+          },
+          {
+            "type": "file_exists",
+            "target": "docs/tools.md",
+            "expected": true,
+            "message": "docs/tools.md is missing"
+          },
+          {
+            "type": "file_exists",
+            "target": "docs/keybindings.md",
+            "expected": true,
+            "message": "docs/keybindings.md is missing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "docs-003",
+      "name": "no-broken-markdown-links",
+      "description": "Markdown files must not have broken relative links",
+      "tags": ["docs"],
+      "difficulty": "medium",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-md-links.sh"
+      }
+    },
+    {
+      "id": "version-001",
+      "name": "version-consistency",
+      "description": "Version number must be consistent across all files",
+      "tags": ["release", "critical"],
+      "difficulty": "medium",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-version-consistency.sh"
+      }
+    },
+    {
+      "id": "repo-001",
+      "name": "license-exists",
+      "description": "LICENSE file must exist",
+      "tags": ["repo"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_exists",
+            "target": "LICENSE",
+            "expected": true,
+            "message": "LICENSE file is missing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "repo-002",
+      "name": "gitignore-exists",
+      "description": ".gitignore must exist",
+      "tags": ["repo"],
+      "difficulty": "easy",
+      "type": "assertion",
+      "phase": "pass_to_pass",
+      "test": {
+        "assertions": [
+          {
+            "type": "file_exists",
+            "target": ".gitignore",
+            "expected": true,
+            "message": ".gitignore is missing"
+          }
+        ]
+      }
+    },
+    {
+      "id": "security-001",
+      "name": "no-secrets-in-repo",
+      "description": "No API keys, tokens, or passwords should be in the codebase",
+      "tags": ["security", "critical"],
+      "difficulty": "medium",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-no-secrets.sh"
+      }
+    }
+  ]
+}

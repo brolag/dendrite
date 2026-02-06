@@ -1,0 +1,33 @@
+{
+  "history": [
+    {
+      "date": "2026-02-05",
+      "run_id": "eval-2026-02-05T21-33-02",
+      "score": 0.9570000000000001,
+      "total": 23,
+      "passed": 22,
+      "failed": 1,
+      "mode": "full"
+    },
+    {
+      "date": "2026-02-05",
+      "run_id": "eval-2026-02-05T21-33-13",
+      "score": 1.0,
+      "total": 23,
+      "passed": 23,
+      "failed": 0,
+      "mode": "full"
+    },
+    {
+      "date": "2026-02-05",
+      "run_id": "eval-2026-02-05T21-39-44",
+      "score": 1.0,
+      "total": 23,
+      "passed": 23,
+      "failed": 0,
+      "mode": "full"
+    }
+  ],
+  "best_score": 1.0,
+  "latest_score": 1.0
+}

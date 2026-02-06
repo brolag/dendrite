@@ -309,39 +309,6 @@ if [ -f "$DENDRITE_DIR/configs/lazygit/config.yml" ]; then
     success "Lazygit config applied"
 fi
 
-# Neovim / LazyVim config (Dendrite theme)
-NVIM_CONFIG="$HOME/.config/nvim"
-if [ -d "$DENDRITE_DIR/configs/nvim" ] && ! should_skip "nvim"; then
-    if [ -d "$NVIM_CONFIG" ]; then
-        echo ""
-        info "Existing Neovim config found."
-        nvim_choice="y"
-        if [ -t 0 ]; then
-            read -p "  Apply Dendrite theme? (Y/n): " nvim_choice
-            nvim_choice="${nvim_choice:-y}"
-        fi
-        case "$nvim_choice" in
-            n|N)
-                warn "Neovim theme skipped"
-                ;;
-            *)
-                backup_config "$NVIM_CONFIG/init.lua"
-                mkdir -p "$NVIM_CONFIG/lua/plugins"
-                cp "$DENDRITE_DIR/configs/nvim/lua/plugins/dendrite-theme.lua" "$NVIM_CONFIG/lua/plugins/"
-                success "Dendrite theme applied to existing Neovim config"
-                ;;
-        esac
-    else
-        info "Setting up Neovim with LazyVim + Dendrite theme..."
-        mkdir -p "$NVIM_CONFIG/lua/config"
-        mkdir -p "$NVIM_CONFIG/lua/plugins"
-        cp "$DENDRITE_DIR/configs/nvim/init.lua" "$NVIM_CONFIG/"
-        cp "$DENDRITE_DIR/configs/nvim/lua/config/"*.lua "$NVIM_CONFIG/lua/config/"
-        cp "$DENDRITE_DIR/configs/nvim/lua/plugins/"*.lua "$NVIM_CONFIG/lua/plugins/"
-        success "Neovim configured with LazyVim + Dendrite theme"
-        info "Plugins will install on first launch of nvim"
-    fi
-fi
 
 # ─────────────────────────────────────────
 # Step 6: Configure shell

@@ -1,0 +1,260 @@
+{
+  "run_id": "eval-2026-02-05T21-33-02",
+  "timestamp": "2026-02-05T21:33:02.011406",
+  "mode": "full",
+  "duration_seconds": 0.3,
+  "summary": {
+    "total": 23,
+    "passed": 22,
+    "failed": 1,
+    "score": 0.9570000000000001
+  },
+  "results": [
+    {
+      "task_id": "shell-001",
+      "name": "install-script-syntax",
+      "status": "PASS",
+      "duration_ms": 7,
+      "details": "",
+      "tags": [
+        "shell",
+        "critical"
+      ]
+    },
+    {
+      "task_id": "shell-002",
+      "name": "install-script-set-e",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "shell",
+        "critical",
+        "safety"
+      ]
+    },
+    {
+      "task_id": "shell-003",
+      "name": "install-script-shebang",
+      "status": "PASS",
+      "duration_ms": 5,
+      "details": "",
+      "tags": [
+        "shell"
+      ]
+    },
+    {
+      "task_id": "shell-004",
+      "name": "install-script-executable",
+      "status": "PASS",
+      "duration_ms": 3,
+      "details": "",
+      "tags": [
+        "shell"
+      ]
+    },
+    {
+      "task_id": "shell-005",
+      "name": "install-script-macos-check",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "shell",
+        "safety"
+      ]
+    },
+    {
+      "task_id": "shell-006",
+      "name": "install-script-homebrew-check",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "shell",
+        "safety"
+      ]
+    },
+    {
+      "task_id": "shell-007",
+      "name": "install-script-backup-function",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "shell",
+        "safety",
+        "critical"
+      ]
+    },
+    {
+      "task_id": "shell-008",
+      "name": "install-script-version-defined",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "shell"
+      ]
+    },
+    {
+      "task_id": "shell-009",
+      "name": "install-script-all-12-tools",
+      "status": "PASS",
+      "duration_ms": 32,
+      "details": "",
+      "tags": [
+        "shell",
+        "completeness"
+      ]
+    },
+    {
+      "task_id": "config-001",
+      "name": "ghostty-config-valid",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "config",
+        "critical"
+      ]
+    },
+    {
+      "task_id": "config-002",
+      "name": "starship-toml-valid",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "config",
+        "critical"
+      ]
+    },
+    {
+      "task_id": "config-003",
+      "name": "lazygit-yaml-valid",
+      "status": "PASS",
+      "duration_ms": 58,
+      "details": "",
+      "tags": [
+        "config",
+        "critical"
+      ]
+    },
+    {
+      "task_id": "html-001",
+      "name": "index-html-exists",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "html",
+        "critical"
+      ]
+    },
+    {
+      "task_id": "html-002",
+      "name": "html-tag-balance",
+      "status": "PASS",
+      "duration_ms": 33,
+      "details": "",
+      "tags": [
+        "html"
+      ]
+    },
+    {
+      "task_id": "html-003",
+      "name": "html-meta-tags",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "html",
+        "seo"
+      ]
+    },
+    {
+      "task_id": "html-004",
+      "name": "html-no-broken-nav-anchors",
+      "status": "PASS",
+      "duration_ms": 31,
+      "details": "",
+      "tags": [
+        "html"
+      ]
+    },
+    {
+      "task_id": "docs-001",
+      "name": "readme-exists",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "docs",
+        "critical"
+      ]
+    },
+    {
+      "task_id": "docs-002",
+      "name": "all-docs-exist",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "docs"
+      ]
+    },
+    {
+      "task_id": "docs-003",
+      "name": "no-broken-markdown-links",
+      "status": "PASS",
+      "duration_ms": 29,
+      "details": "",
+      "tags": [
+        "docs"
+      ]
+    },
+    {
+      "task_id": "version-001",
+      "name": "version-consistency",
+      "status": "FAIL",
+      "duration_ms": 6,
+      "details": "FAIL: Could not extract DENDRITE_VERSION from install.sh",
+      "tags": [
+        "release",
+        "critical"
+      ]
+    },
+    {
+      "task_id": "repo-001",
+      "name": "license-exists",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "repo"
+      ]
+    },
+    {
+      "task_id": "repo-002",
+      "name": "gitignore-exists",
+      "status": "PASS",
+      "duration_ms": 0,
+      "details": "",
+      "tags": [
+        "repo"
+      ]
+    },
+    {
+      "task_id": "security-001",
+      "name": "no-secrets-in-repo",
+      "status": "PASS",
+      "duration_ms": 43,
+      "details": "",
+      "tags": [
+        "security",
+        "critical"
+      ]
+    }
+  ]
+}
