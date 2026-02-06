@@ -311,7 +311,7 @@ fi
 
 # Neovim / LazyVim config (Dendrite theme)
 NVIM_CONFIG="$HOME/.config/nvim"
-if [ -d "$DENDRITE_DIR/configs/nvim" ]; then
+if [ -d "$DENDRITE_DIR/configs/nvim" ] && ! should_skip "nvim"; then
     if [ -d "$NVIM_CONFIG" ]; then
         echo ""
         info "Existing Neovim config found."
