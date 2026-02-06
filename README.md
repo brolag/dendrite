@@ -282,5 +282,5 @@ MIT - see [LICENSE](LICENSE)
 <p align="center">
   <strong>Dendrite</strong><br>
   <sub>The branches that receive the signal.</sub><br>
-  <sub>An <a href="https://indiemind.co">Indie Mind</a> project.</sub>
+  <sub>An <a href="https://indie-mind.com">Indie Mind</a> project.</sub>
 </p>
