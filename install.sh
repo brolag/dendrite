@@ -64,6 +64,9 @@ backup_config() {
 
 TOTAL_STEPS=7
 
+# Tools to skip (populated by interactive selection)
+SKIP_TOOLS=""
+
 # ─────────────────────────────────────────
 # Step 1: Check prerequisites
 # ─────────────────────────────────────────
@@ -120,36 +123,73 @@ fi
 cd "$DENDRITE_DIR"
 
 # ─────────────────────────────────────────
+# Tool selection (interactive)
+# ─────────────────────────────────────────
+
+should_skip() {
+    echo "$SKIP_TOOLS" | grep -qw "$1"
+}
+
+if [ -t 0 ]; then
+    echo ""
+    echo -e "  ${BOLD}Tool selection${RESET}"
+    echo ""
+    read -p "  Install all tools or choose individually? [A/c]: " selection_mode
+    if [[ "$selection_mode" =~ ^[cC]$ ]]; then
+        echo ""
+        info "Select which tools to install (Enter = Yes):"
+        echo ""
+
+        # Core tools
+        ALL_SEL_NAMES=(ghostty  nvim     lazygit  starship fzf      zoxide   eza      bat      fd  rg)
+        ALL_SEL_DESCS=("Ghostty - Terminal emulator" "Neovim - Editor" "Lazygit - Git TUI" "Starship - Shell prompt" "Fzf - Fuzzy finder" "Zoxide - Smart cd" "Eza - Modern ls" "Bat - Modern cat" "Fd - Modern find" "Ripgrep - Code search")
+
+        # Monitoring tools
+        ALL_SEL_NAMES+=(claude-monitor ccm)
+        ALL_SEL_DESCS+=("Claude Monitor - Token tracking" "CCM - Claude Code Monitor")
+
+        j=0
+        while [ $j -lt ${#ALL_SEL_NAMES[@]} ]; do
+            read -p "  Install ${ALL_SEL_DESCS[$j]}? [Y/n]: " tool_choice
+            if [[ "$tool_choice" =~ ^[nN]$ ]]; then
+                SKIP_TOOLS="$SKIP_TOOLS ${ALL_SEL_NAMES[$j]}"
+            fi
+            j=$((j + 1))
+        done
+        echo ""
+    fi
+else
+    info "Non-interactive mode detected — installing all tools"
+fi
+
+# ─────────────────────────────────────────
 # Step 3: Install core tools
 # ─────────────────────────────────────────
 
 step 3 "Installing core tools"
 
-declare -A TOOLS=(
-    [ghostty]="ghostty|cask|Terminal emulator"
-    [nvim]="neovim|formula|Editor"
-    [lazygit]="lazygit|formula|Git TUI"
-    [starship]="starship|formula|Shell prompt"
-    [fzf]="fzf|formula|Fuzzy finder"
-    [zoxide]="zoxide|formula|Smart cd"
-    [eza]="eza|formula|Modern ls"
-    [bat]="bat|formula|Modern cat"
-    [fd]="fd|formula|Modern find"
-    [rg]="ripgrep|formula|Code search"
-)
-
-# Order matters for display
-TOOL_ORDER=(ghostty nvim lazygit starship fzf zoxide eza bat fd rg)
+# Parallel arrays (Bash 3.x compatible - no associative arrays)
+TOOL_CMDS=(ghostty   nvim    lazygit  starship  fzf      zoxide    eza       bat       fd   rg)
+TOOL_PKGS=(ghostty   neovim  lazygit  starship  fzf      zoxide    eza       bat       fd   ripgrep)
+TOOL_TYPES=(cask     formula formula  formula   formula  formula   formula   formula   formula formula)
+TOOL_DESCS=("Terminal emulator" "Editor" "Git TUI" "Shell prompt" "Fuzzy finder" "Smart cd" "Modern ls" "Modern cat" "Modern find" "Code search")
 
 installed_count=0
 skipped_count=0
 
-for cmd in "${TOOL_ORDER[@]}"; do
-    IFS='|' read -r pkg type desc <<< "${TOOLS[$cmd]}"
+i=0
+while [ $i -lt ${#TOOL_CMDS[@]} ]; do
+    cmd="${TOOL_CMDS[$i]}"
+    pkg="${TOOL_PKGS[$i]}"
+    type="${TOOL_TYPES[$i]}"
+    desc="${TOOL_DESCS[$i]}"
 
-    if check_installed "$cmd"; then
+    if should_skip "$cmd"; then
+        warn "$desc ($cmd) - skipped by user"
+        skipped_count=$((skipped_count + 1))
+    elif check_installed "$cmd"; then
         success "$desc ($cmd) - already installed"
-        ((skipped_count++))
+        skipped_count=$((skipped_count + 1))
     else
         info "Installing $desc ($pkg)..."
         if [ "$type" = "cask" ]; then
@@ -160,11 +200,12 @@ for cmd in "${TOOL_ORDER[@]}"; do
 
         if check_installed "$cmd"; then
             success "$desc ($cmd) - installed"
-            ((installed_count++))
+            installed_count=$((installed_count + 1))
         else
             warn "$desc ($cmd) - install manually"
         fi
     fi
+    i=$((i + 1))
 done
 
 echo ""
@@ -177,7 +218,9 @@ info "Installed: $installed_count | Already had: $skipped_count"
 step 4 "Installing monitoring tools"
 
 # claude-monitor (Python/uv)
-if check_installed claude-monitor; then
+if should_skip "claude-monitor"; then
+    warn "claude-monitor - skipped by user"
+elif check_installed claude-monitor; then
     success "claude-monitor - already installed"
 else
     if ! check_installed uv; then
@@ -195,7 +238,9 @@ else
 fi
 
 # ccm (Node)
-if check_installed ccm; then
+if should_skip "ccm"; then
+    warn "ccm (claude-code-monitor) - skipped by user"
+elif check_installed ccm; then
     success "ccm (claude-code-monitor) - already installed"
 else
     if check_installed npm; then
