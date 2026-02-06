@@ -1,0 +1,59 @@
+# Dendrite - Starship Prompt Configuration
+# Minimal, fast, informative
+
+format = """
+$directory\
+$git_branch\
+$git_status\
+$nodejs\
+$python\
+$rust\
+$cmd_duration\
+$line_break\
+$character"""
+
+[directory]
+truncation_length = 3
+truncation_symbol = ".../"
+style = "bold cyan"
+
+[git_branch]
+symbol = " "
+style = "bold purple"
+format = "on [$symbol$branch]($style) "
+
+[git_status]
+format = '([\[$all_status$ahead_behind\]]($style) )'
+style = "bold red"
+conflicted = "="
+ahead = "^"
+behind = "v"
+diverged = "^v"
+untracked = "?"
+stashed = "$"
+modified = "!"
+staged = "+"
+renamed = ">"
+deleted = "x"
+
+[nodejs]
+symbol = " "
+format = "via [$symbol($version )]($style)"
+detect_files = ["package.json"]
+
+[python]
+symbol = " "
+format = 'via [${symbol}${pyenv_prefix}(${version} )]($style)'
+
+[rust]
+symbol = " "
+format = "via [$symbol($version )]($style)"
+
+[cmd_duration]
+min_time = 2_000
+format = "took [$duration]($style) "
+style = "bold yellow"
+
+[character]
+success_symbol = "[>](bold green)"
+error_symbol = "[>](bold red)"

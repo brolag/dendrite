@@ -1,0 +1,1498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dendrite - Opinionated TUI Stack for Agentic Coding</title>
+    <meta name="description" content="One command. 12 tools. Zero config. An opinionated TUI stack for agentic coding with AI agents.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --matrix-green: #00ff41;
+            --matrix-green-dark: #008f11;
+            --matrix-green-glow: #00ff41;
+            --matrix-bg: #0d0208;
+            --matrix-bg-light: #1a1a1a;
+            --terminal-border: #003b00;
+            --text-dim: #00aa00;
+            --text-bright: #00ff41;
+            --scanline: rgba(0, 255, 65, 0.03);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', 'Share Tech Mono', monospace;
+            background: var(--matrix-bg);
+            color: var(--matrix-green);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Matrix rain canvas */
+        #matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.15;
+        }
+
+        /* CRT scanline effect */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            pointer-events: none;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                var(--scanline) 2px,
+                var(--scanline) 4px
+            );
+        }
+
+        /* Glow effect */
+        .glow {
+            text-shadow: 0 0 5px var(--matrix-green), 0 0 10px var(--matrix-green), 0 0 20px var(--matrix-green-dark);
+        }
+
+        .glow-subtle {
+            text-shadow: 0 0 5px var(--matrix-green-dark);
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: rgba(13, 2, 8, 0.95);
+            border-bottom: 1px solid var(--terminal-border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .logo-icon { font-size: 1.5rem; }
+        .logo span { color: var(--matrix-green); }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--matrix-green);
+            text-shadow: 0 0 10px var(--matrix-green);
+        }
+
+        .nav-links a::before {
+            content: '> ';
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .nav-links a:hover::before { opacity: 1; }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: 1px solid var(--matrix-green);
+            background: transparent;
+            color: var(--matrix-green);
+            font-family: inherit;
+            font-size: 0.85rem;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--matrix-green);
+            color: var(--matrix-bg);
+            box-shadow: 0 0 20px var(--matrix-green-dark);
+        }
+
+        .btn::before { content: '['; }
+        .btn::after { content: ']'; }
+
+        .btn-star {
+            border-color: #ffdd00;
+            color: #ffdd00;
+        }
+
+        .btn-star:hover {
+            background: #ffdd00;
+            color: var(--matrix-bg);
+            box-shadow: 0 0 20px rgba(255, 221, 0, 0.4);
+        }
+
+        .btn-star svg { transition: transform 0.3s; }
+        .btn-star:hover svg { transform: scale(1.2) rotate(15deg); }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 6rem 2rem 4rem;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            border: 1px solid var(--terminal-border);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+        }
+
+        .hero-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--matrix-green);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+            box-shadow: 0 0 10px var(--matrix-green);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .ascii-logo {
+            font-size: clamp(0.55rem, 1.8vw, 0.9rem);
+            line-height: 1.15;
+            margin-bottom: 1.5rem;
+            white-space: pre;
+            color: var(--matrix-green);
+            text-shadow: 0 0 8px var(--matrix-green-dark);
+        }
+
+        h1 {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 400;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            letter-spacing: -1px;
+        }
+
+        h1 .highlight {
+            color: var(--matrix-green);
+            font-weight: 700;
+        }
+
+        .hero-subtitle {
+            font-size: 1rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 3rem;
+        }
+
+        /* Terminal Window */
+        .terminal {
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--terminal-border);
+            width: 100%;
+            max-width: 800px;
+            text-align: left;
+            box-shadow: 0 0 40px rgba(0, 255, 65, 0.1);
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 60, 0, 0.3);
+            border-bottom: 1px solid var(--terminal-border);
+        }
+
+        .terminal-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f56; box-shadow: 0 0 5px #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; box-shadow: 0 0 5px #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; box-shadow: 0 0 5px #27c93f; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .terminal-body {
+            padding: 1.5rem;
+            font-size: 0.85rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .terminal-body::-webkit-scrollbar { width: 4px; }
+        .terminal-body::-webkit-scrollbar-thumb { background: var(--terminal-border); }
+
+        .terminal-line {
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            animation: typeIn 0.3s forwards;
+        }
+
+        .terminal-line:nth-child(1) { animation-delay: 0.3s; }
+        .terminal-line:nth-child(2) { animation-delay: 0.6s; }
+        .terminal-line:nth-child(3) { animation-delay: 0.9s; }
+        .terminal-line:nth-child(4) { animation-delay: 1.2s; }
+        .terminal-line:nth-child(5) { animation-delay: 1.5s; }
+        .terminal-line:nth-child(6) { animation-delay: 1.8s; }
+        .terminal-line:nth-child(7) { animation-delay: 2.1s; }
+        .terminal-line:nth-child(8) { animation-delay: 2.4s; }
+        .terminal-line:nth-child(9) { animation-delay: 2.7s; }
+        .terminal-line:nth-child(10) { animation-delay: 3.0s; }
+
+        @keyframes typeIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .prompt { color: var(--matrix-green); }
+        .command { color: #fff; }
+        .output { color: var(--text-dim); }
+        .success { color: var(--matrix-green); }
+        .dim { color: #555; }
+        .warn { color: #ffbd2e; }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: var(--matrix-green);
+            animation: cursorBlink 1s infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        @keyframes cursorBlink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Terminal Input */
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-top: 1px solid var(--terminal-border);
+            background: rgba(0, 30, 0, 0.3);
+        }
+
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--matrix-green);
+            font-family: inherit;
+            font-size: 0.85rem;
+            margin-left: 0.5rem;
+            outline: none;
+            caret-color: var(--matrix-green);
+        }
+
+        .terminal-input::placeholder { color: #004400; }
+
+        /* Sections */
+        .section {
+            padding: 5rem 2rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin-bottom: 1rem;
+        }
+
+        .section-header h2::before {
+            content: '## ';
+            color: var(--text-dim);
+        }
+
+        .section-header p {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Feature Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: rgba(0, 60, 0, 0.1);
+            border: 1px solid var(--terminal-border);
+            padding: 1.5rem;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--matrix-green);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+        }
+
+        .feature-card h3 {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .feature-card h3::before {
+            content: '>';
+            color: var(--text-dim);
+        }
+
+        .feature-card p {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            line-height: 1.7;
+        }
+
+        /* Layout Section */
+        .layout-section {
+            background: rgba(0, 60, 0, 0.05);
+            border-top: 1px solid var(--terminal-border);
+            border-bottom: 1px solid var(--terminal-border);
+        }
+
+        .layout-art {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--terminal-border);
+            padding: 2rem;
+            font-size: 0.8rem;
+            line-height: 1.4;
+            overflow-x: auto;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Stack table */
+        .stack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .stack-card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--terminal-border);
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stack-card:hover {
+            border-color: var(--matrix-green);
+        }
+
+        .stack-card code {
+            display: block;
+            font-size: 1rem;
+            color: var(--matrix-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .stack-card .layer {
+            font-size: 0.7rem;
+            color: #555;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+        }
+
+        .stack-card p {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        /* Keybindings */
+        .keys-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .keys-block {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--terminal-border);
+            padding: 1.5rem;
+        }
+
+        .keys-block h3 {
+            font-size: 0.9rem;
+            color: var(--matrix-green);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--terminal-border);
+        }
+
+        .key-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            font-size: 0.8rem;
+        }
+
+        .key-row .key {
+            color: #ffbd2e;
+        }
+
+        .key-row .action {
+            color: var(--text-dim);
+        }
+
+        /* Install Section */
+        .install-box {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--terminal-border);
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .install-box h3 {
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-dim);
+        }
+
+        .install-box h3::before { content: '# '; }
+
+        .code-block {
+            background: var(--matrix-bg);
+            border: 1px solid var(--terminal-border);
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 60, 0, 0.2);
+            border-bottom: 1px solid var(--terminal-border);
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        .copy-btn {
+            padding: 0.25rem 0.5rem;
+            background: transparent;
+            border: 1px solid var(--terminal-border);
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--matrix-green);
+            color: var(--matrix-green);
+        }
+
+        .copy-btn.copied {
+            border-color: var(--matrix-green);
+            color: var(--matrix-green);
+        }
+
+        .code-block pre {
+            padding: 1rem;
+            margin: 0;
+            font-size: 0.85rem;
+            overflow-x: auto;
+        }
+
+        /* Workflow */
+        .workflow-steps {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .workflow-step {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            width: 32px;
+            height: 32px;
+            border: 1px solid var(--matrix-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+            color: var(--matrix-green);
+        }
+
+        .step-content h4 {
+            font-size: 0.9rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-content p {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        .step-content code {
+            color: var(--matrix-green);
+            font-size: 0.8rem;
+        }
+
+        /* Rules */
+        .rules-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 2rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .rule {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--terminal-border);
+            padding: 1rem;
+        }
+
+        .rule .label {
+            color: #ffbd2e;
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .rule .value {
+            font-size: 0.85rem;
+        }
+
+        /* CTA */
+        .cta-section {
+            text-align: center;
+            padding: 6rem 2rem;
+            border-top: 1px solid var(--terminal-border);
+        }
+
+        .cta-section h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-section p {
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Footer */
+        footer {
+            padding: 2rem;
+            text-align: center;
+            border-top: 1px solid var(--terminal-border);
+            font-size: 0.8rem;
+            color: var(--text-dim);
+        }
+
+        footer a {
+            color: var(--matrix-green);
+            text-decoration: none;
+        }
+
+        footer a:hover { text-decoration: underline; }
+
+        /* Footer cross-links */
+        .footer-crosslinks {
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--terminal-border);
+        }
+
+        .footer-crosslinks-title {
+            font-size: 0.7rem;
+            color: #555;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-crosslinks-list {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-crosslink {
+            color: var(--matrix-green);
+            text-decoration: none;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: baseline;
+            gap: 0.5rem;
+        }
+
+        .footer-crosslink:hover {
+            text-decoration: none;
+            text-shadow: 0 0 8px var(--matrix-green), 0 0 16px var(--matrix-green-dark);
+        }
+
+        .footer-crosslink .crosslink-name {
+            color: var(--matrix-green);
+        }
+
+        .footer-crosslink .crosslink-desc {
+            color: #555;
+            font-size: 0.7rem;
+        }
+
+        .footer-crosslink:hover .crosslink-desc {
+            color: var(--text-dim);
+        }
+
+        /* Version badge */
+        .version-badge {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--terminal-border);
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            z-index: 100;
+        }
+
+        /* Glitch & Easter Eggs */
+        .glitch { animation: glitch 0.3s infinite; }
+
+        @keyframes glitch {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+            100% { transform: translate(0); }
+        }
+
+        .rainbow { animation: rainbow 0.5s infinite; }
+
+        @keyframes rainbow {
+            0% { color: #ff0000; }
+            17% { color: #ff8000; }
+            33% { color: #ffff00; }
+            50% { color: #00ff00; }
+            67% { color: #0080ff; }
+            83% { color: #8000ff; }
+            100% { color: #ff0000; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            h1 { font-size: 1.8rem; }
+            .terminal-body { font-size: 0.75rem; }
+            .terminal-input { font-size: 0.75rem; }
+            .rules-grid { grid-template-columns: 1fr; }
+            .ascii-logo { font-size: 0.45rem; }
+            .footer-crosslinks-list { gap: 1.25rem; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--matrix-bg); }
+        ::-webkit-scrollbar-thumb { background: var(--terminal-border); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--matrix-green-dark); }
+    </style>
+</head>
+<body>
+    <canvas id="matrix-bg"></canvas>
+    <div class="scanlines"></div>
+
+    <nav>
+        <div class="logo">
+            <span class="logo-icon">></span>
+            <span class="glow-subtle">dendrite</span>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#stack">stack</a></li>
+            <li><a href="#keybindings">keys</a></li>
+            <li><a href="#workflow">workflow</a></li>
+            <li><a href="#install">install</a></li>
+            <li><a href="https://github.com/brolag/dendrite">github</a></li>
+        </ul>
+        <a href="https://github.com/brolag/dendrite" class="btn btn-star">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.828 1.48 8.279-7.416-3.967-7.417 3.967 1.481-8.279-6.064-5.828 8.332-1.151z"/>
+            </svg>
+            STAR
+        </a>
+    </nav>
+
+    <!-- ════════════════════════════════════ HERO ════════════════════════════════════ -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="dot"></span>
+            OPEN_SOURCE // MIT_LICENSE
+        </div>
+
+        <pre class="ascii-logo"> ____  _____ _   _ ____  ____  ___ _____ _____
+|  _ \| ____| \ | |  _ \|  _ \|_ _|_   _| ____|
+| | | |  _| |  \| | | | | |_) || |  | | |  _|
+| |_| | |___| |\  | |_| |  _ &lt; | |  | | | |___
+|____/|_____|_| \_|____/|_| \_\___| |_| |_____|</pre>
+
+        <h1>ONE COMMAND.<br><span class="highlight glow">12 TOOLS. ZERO CONFIG.</span></h1>
+        <p class="hero-subtitle">
+            > An opinionated TUI stack for agentic coding with AI agents. Install everything, configure nothing, start building_
+        </p>
+        <div class="hero-cta">
+            <a href="https://github.com/brolag/dendrite" class="btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+                </svg>
+                VIEW_SOURCE
+            </a>
+            <a href="#install" class="btn">QUICK_START</a>
+        </div>
+
+        <div class="terminal" id="interactive-terminal">
+            <div class="terminal-header">
+                <span class="terminal-dot red"></span>
+                <span class="terminal-dot yellow"></span>
+                <span class="terminal-dot green"></span>
+                <span class="terminal-title">ghostty &mdash; dendrite v0.1.0 &mdash; click to interact</span>
+            </div>
+            <div class="terminal-body" id="terminal-output">
+                <div class="terminal-line">
+                    <span class="prompt">$</span> <span class="command">curl -fsSL .../dendrite/install.sh | bash</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="output">[1/7] Checking prerequisites.............. </span><span class="success">OK</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="output">[2/7] Setting up Dendrite................. </span><span class="success">OK</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="output">[3/7] Installing core tools............... </span><span class="success">10/10</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="output">[4/7] Installing monitoring tools......... </span><span class="success">2/2</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="output">[5/7] Applying configurations............. </span><span class="success">OK</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="output">[6/7] Configuring shell................... </span><span class="success">OK</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="output">[7/7] Verifying installation.............. </span><span class="success">12/12</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="dim">---</span>
+                </div>
+                <div class="terminal-line">
+                    <span class="success">Dendrite installed successfully.</span> <span class="output">Type </span><span class="success">help</span><span class="output"> to explore_</span>
+                </div>
+            </div>
+            <div class="terminal-input-line">
+                <span class="prompt">></span>
+                <input type="text" id="terminal-input" class="terminal-input" autocomplete="off" spellcheck="false" placeholder="type a command...">
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════ LAYOUT ════════════════════════════════════ -->
+    <section class="section layout-section">
+        <div class="section-header">
+            <h2>WHAT_YOU_GET</h2>
+            <p>> 4 Ghostty splits. 2 agents. Full visibility._</p>
+        </div>
+<pre class="layout-art">
++---------------------------------------------------+
+|                     GHOSTTY                       |
+| +----------------------+----------------------+   |
+| |  <span class="success">$ claude</span>            |  <span class="success">$ claude</span>            |   |
+| |                      |                      |   |
+| |  Agent 1             |  Agent 2             |   |
+| |  (worktree/auth)     |  (worktree/api)      |   |
+| +----------------------+----------------------+   |
+| |  <span class="warn">LAZYGIT</span>             |  <span style="color:#f778ba">CLAUDE-MONITOR</span>      |   |
+| |  M auth/login.ts     |  <span class="success">||||||||</span><span class="dim">||</span> 72%      |   |
+| |  M auth/oauth.ts     |  Burn: 1.2k/min      |   |
+| |  + api/users.ts      |  ETA: 2h 15m         |   |
+| +----------------------+----------------------+   |
++---------------------------------------------------+
+</pre>
+    </section>
+
+    <!-- ════════════════════════════════════ STACK ════════════════════════════════════ -->
+    <section id="stack" class="section">
+        <div class="section-header">
+            <h2>THE_STACK</h2>
+            <p>> 12 tools, each the best at what it does_</p>
+        </div>
+
+        <div class="stack-grid">
+            <div class="stack-card">
+                <div class="layer">Terminal</div>
+                <code>Ghostty</code>
+                <p>GPU splits, no tmux</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Editor</div>
+                <code>Neovim + LazyVim</code>
+                <p>Modal editing + AI</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Git</div>
+                <code>Lazygit</code>
+                <p>Real-time agent diffs</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Token Monitor</div>
+                <code>claude-monitor</code>
+                <p>Burn rate &amp; limits</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Session Monitor</div>
+                <code>ccm</code>
+                <p>Multi-agent tracking</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Shell</div>
+                <code>Zsh + Starship</code>
+                <p>Fast prompt, git info</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Fuzzy Find</div>
+                <code>fzf</code>
+                <p>Ctrl+R, Ctrl+T, Alt+C</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Navigation</div>
+                <code>zoxide</code>
+                <p>Smart cd (learns paths)</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">File View</div>
+                <code>bat + eza</code>
+                <p>Syntax highlight, icons</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Search</div>
+                <code>ripgrep + fd</code>
+                <p>Fastest code search</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">AI Agents</div>
+                <code>Claude Code</code>
+                <p>Primary agent</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Isolation</div>
+                <code>Git Worktrees</code>
+                <p>One per agent</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════ KEYBINDINGS ════════════════════════════════════ -->
+    <section id="keybindings" class="section">
+        <div class="section-header">
+            <h2>KEYBINDINGS</h2>
+            <p>> Muscle memory for multi-agent workflows_</p>
+        </div>
+
+        <div class="keys-grid">
+            <div class="keys-block">
+                <h3>GHOSTTY SPLITS</h3>
+                <div class="key-row"><span class="key">Cmd+Shift+Right</span><span class="action">Split right</span></div>
+                <div class="key-row"><span class="key">Cmd+Shift+Down</span><span class="action">Split down</span></div>
+                <div class="key-row"><span class="key">Cmd+Arrow</span><span class="action">Navigate splits</span></div>
+                <div class="key-row"><span class="key">Cmd+Ctrl+Arrow</span><span class="action">Resize splits</span></div>
+                <div class="key-row"><span class="key">Cmd+Shift+E</span><span class="action">Equalize splits</span></div>
+                <div class="key-row"><span class="key">Cmd+Shift+W</span><span class="action">Close split</span></div>
+            </div>
+            <div class="keys-block">
+                <h3>LAZYGIT</h3>
+                <div class="key-row"><span class="key">Tab</span><span class="action">Switch panels</span></div>
+                <div class="key-row"><span class="key">j / k</span><span class="action">Navigate</span></div>
+                <div class="key-row"><span class="key">Space</span><span class="action">Stage/unstage</span></div>
+                <div class="key-row"><span class="key">c</span><span class="action">Commit</span></div>
+                <div class="key-row"><span class="key">P</span><span class="action">Push</span></div>
+                <div class="key-row"><span class="key">?</span><span class="action">All keybindings</span></div>
+            </div>
+            <div class="keys-block">
+                <h3>SHELL (FZF + ZOXIDE)</h3>
+                <div class="key-row"><span class="key">Ctrl+R</span><span class="action">Fuzzy search history</span></div>
+                <div class="key-row"><span class="key">Ctrl+T</span><span class="action">Fuzzy find files</span></div>
+                <div class="key-row"><span class="key">Alt+C</span><span class="action">Fuzzy cd directories</span></div>
+                <div class="key-row"><span class="key">z &lt;partial&gt;</span><span class="action">Smart cd (zoxide)</span></div>
+            </div>
+            <div class="keys-block">
+                <h3>ALIASES</h3>
+                <div class="key-row"><span class="key">lg</span><span class="action">lazygit</span></div>
+                <div class="key-row"><span class="key">cm</span><span class="action">claude-monitor</span></div>
+                <div class="key-row"><span class="key">ll</span><span class="action">eza -la --icons --git</span></div>
+                <div class="key-row"><span class="key">wt-new X</span><span class="action">Create worktree</span></div>
+                <div class="key-row"><span class="key">wt-list</span><span class="action">List worktrees</span></div>
+                <div class="key-row"><span class="key">wt-rm X</span><span class="action">Remove worktree</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════ WORKFLOW ════════════════════════════════════ -->
+    <section id="workflow" class="section">
+        <div class="section-header">
+            <h2>MULTI_AGENT_WORKFLOW</h2>
+            <p>> Run parallel AI agents with full visibility_</p>
+        </div>
+
+        <div class="workflow-steps">
+            <div class="workflow-step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h4>Create isolated workspaces</h4>
+                    <p><code>wt-new auth</code> &nbsp; <code>wt-new api</code></p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h4>Open 4-panel layout in Ghostty</h4>
+                    <p>Cmd+Shift+Right, Cmd+Left, Cmd+Shift+Down, repeat</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h4>Start agents in each panel</h4>
+                    <p>Panel 1: <code>cd .worktrees/auth && claude</code><br>
+                    Panel 2: <code>cd .worktrees/api && claude</code><br>
+                    Panel 3: <code>lg</code> (lazygit)<br>
+                    Panel 4: <code>cm</code> (claude-monitor)</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-num">4</div>
+                <div class="step-content">
+                    <h4>Watch lazygit for real-time changes</h4>
+                    <p>See diffs as agents write code. Stage, review, commit.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-num">5</div>
+                <div class="step-content">
+                    <h4>Merge when done</h4>
+                    <p><code>git merge feature/auth && git merge feature/api</code></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rules-grid">
+            <div class="rule">
+                <div class="label">MAX AGENTS</div>
+                <div class="value">2-3</div>
+            </div>
+            <div class="rule">
+                <div class="label">TASK RULE</div>
+                <div class="value">Independent only</div>
+            </div>
+            <div class="rule">
+                <div class="label">SUPERVISION</div>
+                <div class="value">Always</div>
+            </div>
+            <div class="rule">
+                <div class="label">RATE LIMITS</div>
+                <div class="value">Shared</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════ INSTALL ════════════════════════════════════ -->
+    <section id="install" class="section">
+        <div class="section-header">
+            <h2>INSTALLATION</h2>
+            <p>> One command. That's it._</p>
+        </div>
+
+        <div class="install-box">
+            <h3>ONE_COMMAND_INSTALL</h3>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Install everything</span>
+                    <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                </div>
+                <pre><code><span class="prompt">$</span> curl -fsSL https://raw.githubusercontent.com/brolag/dendrite/main/install.sh | bash</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Or clone manually</span>
+                    <button class="copy-btn" onclick="copyCode(this)">COPY</button>
+                </div>
+                <pre><code><span class="prompt">$</span> git clone https://github.com/brolag/dendrite ~/Sites/dendrite && cd ~/Sites/dendrite && ./install.sh</code></pre>
+            </div>
+
+            <p style="color: var(--text-dim); font-size: 0.8rem; margin-top: 1rem;">The installer skips tools you already have, backs up existing configs, and verifies everything at the end.</p>
+        </div>
+    </section>
+
+    <!-- ════════════════════════════════════ CTA ════════════════════════════════════ -->
+    <section class="cta-section">
+        <h2 class="glow-subtle">> READY TO BRANCH OUT?</h2>
+        <p>The branches that receive the signal.</p>
+        <a href="https://github.com/brolag/dendrite" class="btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+            </svg>
+            CLONE_REPO
+        </a>
+    </section>
+
+    <footer>
+        <p>
+            Built by <a href="https://github.com/brolag">Alfredo Bonilla</a> //
+            An <a href="https://indiemind.co">Indie Mind</a> project //
+            <a href="https://github.com/brolag/dendrite/blob/main/README.md">DOCS</a> //
+            <a href="https://github.com/brolag/dendrite/blob/main/LICENSE">MIT</a>
+        </p>
+        <div class="footer-crosslinks">
+            <div class="footer-crosslinks-title">-- more from indie mind --</div>
+            <div class="footer-crosslinks-list">
+                <a href="https://brolag.github.io/neural-claude-code-plugin/" target="_blank" rel="noopener noreferrer" class="footer-crosslink">
+                    <span class="crosslink-name">> neural-claude-code</span>
+                    <span class="crosslink-desc">Self-improving AI dev system</span>
+                </a>
+                <a href="https://indie-mind.com/" target="_blank" rel="noopener noreferrer" class="footer-crosslink">
+                    <span class="crosslink-name">> indie-mind.com</span>
+                    <span class="crosslink-desc">AI Adoption Consulting</span>
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <div class="version-badge">v0.1.0</div>
+
+    <script>
+        // ═══════════════════════════════ Matrix Rain ═══════════════════════════════
+        const canvas = document.getElementById('matrix-bg');
+        const ctx = canvas.getContext('2d');
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resize();
+        window.addEventListener('resize', resize);
+
+        const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789DENDRITE';
+        const fontSize = 14;
+        const columns = Math.floor(canvas.width / fontSize);
+        const drops = Array(columns).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(13, 2, 8, 0.05)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#00ff41';
+            ctx.font = fontSize + 'px monospace';
+
+            for (let i = 0; i < drops.length; i++) {
+                const char = chars[Math.floor(Math.random() * chars.length)];
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+
+                ctx.fillText(char, x, y);
+
+                if (y > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+
+        // ═══════════════════════════════ Smooth Scroll ═══════════════════════════════
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // ═══════════════════════════════ Copy Code ═══════════════════════════════
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-block');
+            const code = codeBlock.querySelector('code').innerText.replace(/^\$ /, '');
+
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'COPIED';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'COPY';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        // ═══════════════════════════════ Interactive Terminal ═══════════════════════════════
+        const terminalInput = document.getElementById('terminal-input');
+        const terminalOutput = document.getElementById('terminal-output');
+        const terminal = document.getElementById('interactive-terminal');
+        let commandHistory = [];
+        let historyIndex = -1;
+        let matrixSpeed = 50;
+        let hackedMode = false;
+
+        terminal.addEventListener('click', () => terminalInput.focus());
+
+        terminalInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const cmd = terminalInput.value.trim().toLowerCase();
+                if (cmd) {
+                    commandHistory.push(cmd);
+                    historyIndex = commandHistory.length;
+                    processCommand(cmd);
+                    terminalInput.value = '';
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    terminalInput.value = commandHistory[historyIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    terminalInput.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    terminalInput.value = '';
+                }
+            }
+        });
+
+        function addLine(content, type = 'output') {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.style.opacity = '1';
+            line.innerHTML = `<span class="${type}">${content}</span>`;
+            terminalOutput.appendChild(line);
+            terminalOutput.scrollTop = terminalOutput.scrollHeight;
+        }
+
+        function addPromptLine(cmd) {
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.style.opacity = '1';
+            line.innerHTML = `<span class="prompt">></span> <span class="command">${cmd}</span>`;
+            terminalOutput.appendChild(line);
+        }
+
+        const commands = {
+            help: () => {
+                addLine('Available commands:', 'success');
+                addLine('  help       Show this menu');
+                addLine('  stack      List all 12 tools');
+                addLine('  install    Show install command');
+                addLine('  workflow   Multi-agent setup steps');
+                addLine('  aliases    Show shell aliases');
+                addLine('  matrix     Toggle matrix intensity');
+                addLine('  hack       ???');
+                addLine('  sudo       Try it...');
+                addLine('  clear      Clear terminal');
+                addLine('  whoami     Who are you?');
+                addLine('  coffee     Essential fuel');
+                addLine('  exit       Nice try');
+                addLine('  repo       Open GitHub repo');
+                addLine('  star       Star the repo!');
+            },
+
+            stack: () => {
+                addLine('[THE DENDRITE STACK]', 'success');
+                const tools = [
+                    ['Ghostty', 'GPU terminal, native splits'],
+                    ['Neovim', 'Modal editing + LazyVim'],
+                    ['Lazygit', 'Git TUI, real-time diffs'],
+                    ['claude-monitor', 'Token burn rate'],
+                    ['ccm', 'Multi-session tracking'],
+                    ['Starship', 'Fast shell prompt'],
+                    ['fzf', 'Fuzzy finder'],
+                    ['zoxide', 'Smart cd'],
+                    ['bat + eza', 'Modern cat + ls'],
+                    ['ripgrep + fd', 'Code search'],
+                    ['Claude Code', 'AI agent'],
+                    ['Git Worktrees', 'Agent isolation'],
+                ];
+                tools.forEach(([t, d]) => addLine(`  > ${t.padEnd(16)} ${d}`));
+            },
+
+            install: () => {
+                addLine('[ONE COMMAND INSTALL]', 'success');
+                addLine('');
+                addLine('curl -fsSL https://raw.githubusercontent.com/brolag/dendrite/main/install.sh | bash', 'command');
+                addLine('');
+                addLine('Restart your terminal after install.', 'output');
+            },
+
+            workflow: () => {
+                addLine('[MULTI-AGENT WORKFLOW]', 'success');
+                addLine('  1. wt-new auth && wt-new api');
+                addLine('  2. Open 4 Ghostty splits');
+                addLine('  3. Agent 1: cd .worktrees/auth && claude');
+                addLine('  4. Agent 2: cd .worktrees/api && claude');
+                addLine('  5. Panel 3: lg (lazygit)');
+                addLine('  6. Panel 4: cm (claude-monitor)');
+                addLine('  7. Watch, merge, clean up');
+            },
+
+            aliases: () => {
+                addLine('[SHELL ALIASES]', 'success');
+                addLine('  lg        lazygit');
+                addLine('  cm        claude-monitor');
+                addLine('  ll        eza -la --icons --git');
+                addLine('  cat       bat --style=plain');
+                addLine('  wt-new    create git worktree');
+                addLine('  wt-list   list worktrees');
+                addLine('  wt-rm     remove worktree');
+            },
+
+            matrix: () => {
+                matrixSpeed = matrixSpeed === 50 ? 20 : 50;
+                clearInterval(window.matrixInterval);
+                window.matrixInterval = setInterval(drawMatrix, matrixSpeed);
+                document.getElementById('matrix-bg').style.opacity = matrixSpeed === 20 ? '0.4' : '0.15';
+                addLine(matrixSpeed === 20 ? '[MATRIX OVERDRIVE ENGAGED]' : '[MATRIX NORMALIZED]', 'success');
+            },
+
+            hack: () => {
+                hackedMode = !hackedMode;
+                if (hackedMode) {
+                    document.body.classList.add('glitch');
+                    addLine('[ACCESSING MAINFRAME...]', 'success');
+                    setTimeout(() => addLine('> Bypassing firewall...'), 300);
+                    setTimeout(() => addLine('> Rerouting dendrites...'), 600);
+                    setTimeout(() => addLine('> Overclocking neurons...'), 900);
+                    setTimeout(() => {
+                        addLine('[SYNAPTIC LINK ESTABLISHED]', 'success');
+                        addLine('Just kidding. This is a landing page.');
+                        document.body.classList.remove('glitch');
+                    }, 1500);
+                }
+            },
+
+            sudo: () => {
+                addLine('[PERMISSION DENIED]', 'dim');
+                addLine('Nice try. You are not in the sudoers file.');
+                addLine('This incident will be reported.');
+            },
+
+            clear: () => {
+                terminalOutput.innerHTML = '';
+                addLine('[TERMINAL CLEARED]', 'success');
+            },
+
+            whoami: () => {
+                addLine('[IDENTITY CHECK]', 'success');
+                addLine('You are a developer.');
+                addLine('You run multiple AI agents.');
+                addLine('You need better tools.');
+                addLine('');
+                addLine('> Install Dendrite. Branch out.');
+            },
+
+            coffee: () => {
+                addLine('&nbsp;', 'output');
+                addLine('&nbsp;&nbsp;&nbsp;&nbsp;)&nbsp;&nbsp;)', 'dim');
+                addLine('&nbsp;&nbsp;&nbsp;(&nbsp;&nbsp;(', 'dim');
+                addLine('&nbsp;&nbsp;.------.', 'success');
+                addLine('&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|]', 'success');
+                addLine('&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|', 'success');
+                addLine('&nbsp;&nbsp;`------\u00b4', 'success');
+                addLine('&nbsp;', 'output');
+                addLine('[CAFFEINE LOADED] +10 productivity', 'success');
+            },
+
+            exit: () => {
+                addLine('[ERROR]', 'dim');
+                addLine('There is no escape from the Matrix.');
+                addLine('');
+                addLine('(Try "repo" instead)');
+            },
+
+            repo: () => {
+                addLine('[OPENING GITHUB...]', 'success');
+                setTimeout(() => {
+                    window.open('https://github.com/brolag/dendrite', '_blank');
+                }, 500);
+            },
+
+            star: () => {
+                addLine('&nbsp;', 'output');
+                addLine('&nbsp;&nbsp;&nbsp;&nbsp;\u2605', 'success');
+                addLine('&nbsp;&nbsp;&nbsp;/|\\', 'success');
+                addLine('&nbsp;&nbsp;/_|_\\', 'success');
+                addLine('&nbsp;', 'output');
+                addLine('[THANK YOU] Stars help others discover Dendrite!', 'success');
+                addLine('Opening GitHub...', 'output');
+                setTimeout(() => {
+                    window.open('https://github.com/brolag/dendrite', '_blank');
+                }, 1000);
+            },
+
+            hello: () => { addLine('Hello, human.', 'success'); addLine('Ready to branch out?'); },
+            hi: () => commands.hello(),
+
+            ls: () => { addLine('configs/  docs/  install.sh  README.md  LICENSE', 'output'); },
+            pwd: () => { addLine('/dendrite', 'output'); },
+            vim: () => { addLine('[ERROR] How do I exit this?!', 'dim'); },
+            emacs: () => { addLine('[ERROR] Nice OS, where\'s the text editor?', 'dim'); },
+            '42': () => { addLine('The answer to life, the universe, and everything.', 'success'); },
+            ping: () => { addLine('PONG', 'success'); },
+            date: () => { addLine(new Date().toString(), 'output'); },
+            uptime: () => { addLine('Dendrite: The branches never sleep.', 'output'); },
+            neofetch: () => {
+                addLine('&nbsp;', 'output');
+                addLine('  <span class="success">dendrite</span> v0.1.0', 'output');
+                addLine('  ──────────────', 'dim');
+                addLine('  OS: macOS (required)', 'output');
+                addLine('  Terminal: Ghostty', 'output');
+                addLine('  Shell: Zsh + Starship', 'output');
+                addLine('  Editor: Neovim + LazyVim', 'output');
+                addLine('  Git: Lazygit', 'output');
+                addLine('  Tools: 12 installed', 'output');
+                addLine('  Agents: As many as you dare', 'output');
+            },
+        };
+
+        function processCommand(cmd) {
+            addPromptLine(cmd);
+
+            if (commands[cmd]) {
+                commands[cmd]();
+            } else if (cmd.startsWith('echo ')) {
+                addLine(cmd.substring(5), 'output');
+            } else if (cmd.startsWith('cd ')) {
+                addLine('[ERROR] This is a website, not a filesystem.', 'dim');
+            } else if (cmd === 'rm -rf /') {
+                addLine('[BLOCKED]', 'dim');
+                addLine('Nice try, chaos agent.');
+            } else {
+                addLine(`Command not found: ${cmd}`, 'dim');
+                addLine('Type "help" for available commands.', 'output');
+            }
+        }
+
+        // ═══════════════════════════════ Konami Code ═══════════════════════════════
+        let konamiCode = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
+        let konamiIndex = 0;
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === konamiCode[konamiIndex]) {
+                konamiIndex++;
+                if (konamiIndex === konamiCode.length) {
+                    activateKonami();
+                    konamiIndex = 0;
+                }
+            } else {
+                konamiIndex = 0;
+            }
+        });
+
+        function activateKonami() {
+            document.body.classList.add('rainbow');
+            addLine('', 'output');
+            addLine('[KONAMI CODE ACTIVATED]', 'success');
+            addLine('> DENDRITES OVERLOADED', 'success');
+            addLine('> SYNAPTIC OVERDRIVE MODE', 'success');
+            addLine('', 'output');
+
+            setTimeout(() => {
+                document.body.classList.remove('rainbow');
+            }, 3000);
+        }
+
+        // Start matrix
+        window.matrixInterval = setInterval(drawMatrix, matrixSpeed);
+    </script>
+</body>
+</html>

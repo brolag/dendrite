@@ -1,0 +1,61 @@
+# Dendrite - Ghostty Configuration
+# Optimized for multi-agent agentic coding
+# ============================================
+
+# Font
+font-family = JetBrains Mono
+font-size = 14
+
+# Shell
+shell-integration = zsh
+
+# Clipboard
+clipboard-read = allow
+clipboard-write = allow
+
+# Window
+window-padding-x = 8
+window-padding-y = 6
+confirm-close-surface = true
+
+# SSH Fix
+term = xterm-256color
+
+# ============================================
+# SPLITS - Multi-Agent Keybindings
+# ============================================
+
+# Create splits
+keybind = cmd+shift+right=new_split:right
+keybind = cmd+shift+down=new_split:down
+
+# Navigate between splits
+keybind = cmd+left=goto_split:left
+keybind = cmd+right=goto_split:right
+keybind = cmd+up=goto_split:top
+keybind = cmd+down=goto_split:bottom
+
+# Resize splits
+keybind = cmd+ctrl+left=resize_split:left,20
+keybind = cmd+ctrl+right=resize_split:right,20
+keybind = cmd+ctrl+up=resize_split:up,20
+keybind = cmd+ctrl+down=resize_split:down,20
+
+# Close split
+keybind = cmd+shift+w=close_surface
+
+# Equalize splits
+keybind = cmd+shift+e=equalize_splits
+
+# ============================================
+# QUICK ACTIONS
+# ============================================
+
+# Toggle fullscreen
+keybind = cmd+enter=toggle_fullscreen
+
+# Tabs
+keybind = cmd+t=new_tab
+keybind = cmd+1=goto_tab:1
+keybind = cmd+2=goto_tab:2
+keybind = cmd+3=goto_tab:3

@@ -1,0 +1,31 @@
+# Dendrite - Lazygit Configuration
+
+gui:
+  showIcons: true
+  showFileTree: true
+  showRandomTip: false
+  nerdFontsVersion: "3"
+  theme:
+    activeBorderColor:
+      - "#a6e3a1"
+      - bold
+    inactiveBorderColor:
+      - "#585b70"
+    selectedLineBgColor:
+      - "#313244"
+
+git:
+  paging:
+    colorArg: always
+    pager: ""
+  autoFetch: true
+  autoRefresh: true
+
+refresher:
+  refreshInterval: 3
+  fetchInterval: 60
+
+keybinding:
+  universal:
+    quit: "q"
+    return: "<esc>"
