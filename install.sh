@@ -315,18 +315,20 @@ if [ -d "$DENDRITE_DIR/configs/nvim" ]; then
     if [ -d "$NVIM_CONFIG" ]; then
         echo ""
         info "Existing Neovim config found."
-        read -p "  Apply Dendrite theme? (y/N): " nvim_choice
+        nvim_choice="y"
+        if [ -t 0 ]; then
+            read -p "  Apply Dendrite theme? (Y/n): " nvim_choice
+            nvim_choice="${nvim_choice:-y}"
+        fi
         case "$nvim_choice" in
-            y|Y)
+            n|N)
+                warn "Neovim theme skipped"
+                ;;
+            *)
                 backup_config "$NVIM_CONFIG/init.lua"
-                # Copy Dendrite nvim config files
-                mkdir -p "$NVIM_CONFIG/lua/config"
                 mkdir -p "$NVIM_CONFIG/lua/plugins"
                 cp "$DENDRITE_DIR/configs/nvim/lua/plugins/dendrite-theme.lua" "$NVIM_CONFIG/lua/plugins/"
                 success "Dendrite theme applied to existing Neovim config"
-                ;;
-            *)
-                warn "Neovim theme skipped"
                 ;;
         esac
     else
