@@ -427,6 +427,56 @@
             margin: 0 auto;
         }
 
+        /* Responsive layout grid (mobile alternative to ASCII art) */
+        .layout-grid {
+            display: none;
+        }
+
+        .layout-grid-outer {
+            border: 1px dashed var(--terminal-border);
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .layout-grid-title {
+            text-align: center;
+            color: var(--matrix-green);
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            letter-spacing: 0.1em;
+        }
+
+        .layout-grid-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .layout-grid-cell {
+            border: 1px dashed var(--terminal-border);
+            padding: 0.75rem;
+            min-height: 80px;
+        }
+
+        .layout-grid-cell .cell-title {
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-bottom: 0.4rem;
+        }
+
+        .layout-grid-cell .cell-cmd {
+            color: var(--matrix-green);
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .layout-grid-cell .cell-detail {
+            font-size: 0.65rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
         /* Stack table */
         .stack-grid {
             display: grid;
@@ -760,6 +810,21 @@
             .terminal-input { font-size: 0.75rem; }
             .rules-grid { grid-template-columns: 1fr; }
             .footer-crosslinks-list { gap: 1.25rem; }
+
+            /* Hide ASCII art, show responsive grid */
+            .layout-art { display: none; }
+            .layout-grid { display: block; }
+
+            .layout-grid-inner {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.4rem;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .layout-grid-inner {
+                grid-template-columns: 1fr;
+            }
         }
 
         /* Scrollbar */
@@ -891,6 +956,43 @@
 | +----------------------+----------------------+   |
 +---------------------------------------------------+
 </pre>
+        <div class="layout-grid">
+            <div class="layout-grid-outer">
+                <div class="layout-grid-title">GHOSTTY</div>
+                <div class="layout-grid-inner">
+                    <div class="layout-grid-cell">
+                        <div class="cell-cmd">$ claude</div>
+                        <div class="cell-detail">
+                            Agent 1<br>
+                            (worktree/auth)
+                        </div>
+                    </div>
+                    <div class="layout-grid-cell">
+                        <div class="cell-cmd">$ claude</div>
+                        <div class="cell-detail">
+                            Agent 2<br>
+                            (worktree/api)
+                        </div>
+                    </div>
+                    <div class="layout-grid-cell">
+                        <div class="cell-title" style="color:#ffbd2e">LAZYGIT</div>
+                        <div class="cell-detail">
+                            M auth/login.ts<br>
+                            M auth/oauth.ts<br>
+                            + api/users.ts
+                        </div>
+                    </div>
+                    <div class="layout-grid-cell">
+                        <div class="cell-title" style="color:#f778ba">CLAUDE-MONITOR</div>
+                        <div class="cell-detail">
+                            <span class="success">||||||||</span><span class="dim">||</span> 72%<br>
+                            Burn: 1.2k/min<br>
+                            ETA: 2h 15m
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
     <!-- ════════════════════════════════════ STACK ════════════════════════════════════ -->
