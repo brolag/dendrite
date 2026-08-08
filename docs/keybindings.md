@@ -4,7 +4,91 @@ All keyboard shortcuts in one place.
 
 ---
 
-## Ghostty
+## cmux
+
+### Workspaces
+
+| Action | Key |
+|--------|-----|
+| New workspace | `Cmd + N` |
+| Select workspace 1-9 | `Cmd + 1…9` |
+| Workspace switcher | `Cmd + P` |
+| Next / previous workspace | `Ctrl + Cmd + ]` / `Ctrl + Cmd + [` |
+| Rename workspace | `Cmd + Shift + R` |
+| Mark workspace as done | `Cmd + ;` |
+| Toggle left sidebar | `Cmd + B` |
+| Close workspace | `Cmd + Shift + W` |
+
+### Split panes
+
+| Action | Key |
+|--------|-----|
+| Split right | `Cmd + D` |
+| Split down | `Cmd + Shift + D` |
+| Focus pane left / right | `Opt + Cmd + Left` / `Opt + Cmd + Right` |
+| Focus pane up / down | `Opt + Cmd + Up` / `Opt + Cmd + Down` |
+| Toggle pane zoom | `Cmd + Shift + Enter` |
+| Equalize split sizes | `Ctrl + Cmd + Shift + =` |
+
+### Tabs (surfaces)
+
+| Action | Key |
+|--------|-----|
+| New tab | `Cmd + T` |
+| Next / previous tab | `Cmd + Shift + ]` / `Cmd + Shift + [` |
+| Select tab 1-9 | `Ctrl + 1…9` |
+| Rename tab | `Cmd + R` |
+| Close tab | `Cmd + W` |
+| Reopen last closed | `Cmd + Shift + T` |
+
+### Notifications
+
+| Action | Key |
+|--------|-----|
+| Show notifications | `Cmd + I` |
+| Jump to latest unread | `Cmd + Shift + U` |
+| Toggle unread state | `Opt + Cmd + U` |
+
+### Browser pane
+
+| Action | Key |
+|--------|-----|
+| Open browser | `Cmd + Shift + L` |
+| Split browser right | `Opt + Cmd + D` |
+| Focus address bar | `Cmd + L` |
+| Developer tools | `Opt + Cmd + I` |
+
+### Other
+
+| Action | Key |
+|--------|-----|
+| Command palette | `Opt + Cmd + F` |
+| Settings | `Cmd + ,` |
+| Reload config | `Cmd + Shift + ,` |
+| Toggle full screen | `Ctrl + Cmd + F` |
+| Open diff viewer | `Ctrl + Cmd + Shift + D` |
+| Find in directory | `Cmd + Shift + F` |
+
+---
+
+## herdr
+
+Prefix is `Ctrl + B`. Press it, release, then the key.
+
+| Action | Key |
+|--------|-----|
+| Split pane right | `Ctrl + B` then `v` |
+| Split pane down | `Ctrl + B` then `-` |
+| New tab | `Ctrl + B` then `c` |
+| Detach (agents keep running) | `Ctrl + B` then `q` |
+| Show all active bindings | `Ctrl + B` then `?` |
+
+---
+
+## Ghostty (fallback terminal)
+
+Only applies if you use Ghostty instead of cmux. These come from Dendrite's
+`~/.config/ghostty/config`.
 
 ### Splits
 

@@ -1,12 +1,13 @@
 #!/bin/bash
-# Verify install.sh references all 12 tools in the Dendrite stack
+# Verify install.sh references all 13 tools in the Dendrite stack
 set -e
 
 SCRIPT="install.sh"
 MISSING=0
 
 TOOLS=(
-  "ghostty"
+  "cmux"
+  "herdr"
   "neovim:nvim"
   "lazygit"
   "starship"
@@ -37,5 +38,5 @@ if [ "$MISSING" -gt 0 ]; then
   exit 1
 fi
 
-echo "PASS: All 12 tools referenced in install.sh"
+echo "PASS: All 13 tools referenced in install.sh"
 exit 0

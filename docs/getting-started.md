@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- macOS (Apple Silicon or Intel)
+- macOS 14 or later (Apple Silicon or Intel) — cmux requires it
 - [Homebrew](https://brew.sh/) installed
-- A terminal (Dendrite will install Ghostty for you)
+- A terminal (Dendrite will install cmux for you)
 
 ## Installation
 
@@ -15,7 +15,7 @@ curl -fsSL https://raw.githubusercontent.com/brolag/dendrite/main/install.sh | b
 The installer is interactive. It will:
 
 1. Check prerequisites (Homebrew, Git)
-2. Install 12 tools via Homebrew
+2. Install 13 tools via Homebrew
 3. Install monitoring tools (claude-monitor, ccm)
 4. Apply optimized configs (with backup of existing ones)
 5. Configure your shell with aliases and helpers
@@ -31,9 +31,14 @@ Close and reopen your terminal, or run:
 source ~/.zshrc
 ```
 
-### 2. Open Ghostty
+### 2. Open cmux
 
-If Ghostty was just installed, open it from Applications.
+If cmux was just installed, open it from Applications. It picks up the font, theme and
+colors Dendrite wrote to `~/.config/ghostty/config`, plus its own settings in
+`~/.config/cmux/cmux.json`.
+
+Prefer a plain terminal? Install Ghostty (`brew install --cask ghostty`) and use it
+instead. The same config file drives both.
 
 ### 3. Try the basics
 
@@ -55,14 +60,14 @@ lg                   # lazygit
 
 ### 4. Try multi-agent layout
 
-Create the 4-panel layout:
+Open a workspace for the task, then split it into 4 panes:
 
 ```
-Cmd+Shift+Right      Split right
-Cmd+Left              Go to left split
-Cmd+Shift+Down        Split down
-Cmd+Right             Go to right split
-Cmd+Shift+Down        Split down
+Cmd+N                 New workspace
+Cmd+D                 Split right
+Cmd+Shift+D           Split down
+Opt+Cmd+Right         Focus the right pane
+Cmd+Shift+D           Split down
 ```
 
 You now have:
@@ -93,6 +98,25 @@ lazygit
 claude-monitor
 ```
 
+When an agent stops to ask you something, its pane rings and the sidebar shows an
+unread badge. `Cmd+I` opens notifications, `Cmd+Shift+U` jumps to the latest one.
+
+### 6. Keep agents alive with herdr
+
+Anything longer than a coffee break should run inside the runtime:
+
+```bash
+herdr                     # start or reattach to the default session
+# Ctrl+B then v             split a pane and run your agent there
+# Ctrl+B then q             detach — the agent keeps working
+
+herdr session list        # every session
+herdr agent list          # working, blocked or idle
+```
+
+Close the laptop, lose the network, reopen tomorrow: `herdr` puts you back where you
+were. From another machine, use `herdr --remote <host>`.
+
 ## Aliases Reference
 
 | Alias | Command | Description |
@@ -107,9 +131,20 @@ claude-monitor
 
 ## Troubleshooting
 
+### cmux shortcuts don't work
+
+Reload the config with `Cmd+Shift+,` or `cmux reload-config`. If the font or theme
+looks wrong instead, check `~/.config/ghostty/config` — that is where cmux reads them
+from.
+
 ### Ghostty keybindings don't work
 
 Quit Ghostty completely (`Cmd+Q`) and reopen. Config loads at startup.
+
+### herdr says the server isn't running
+
+Run `herdr status` to see the runtime state, and `herdr server` to start it
+explicitly. `herdr server stop` kills it, which also kills the agents inside.
 
 ### Starship prompt not showing
 

@@ -1,0 +1,17 @@
+{
+  // Dendrite - cmux Configuration
+  // Optimized for multi-agent agentic coding
+  // Font, theme and colors are inherited from ~/.config/ghostty/config
+  "$schema": "https://raw.githubusercontent.com/manaflow-ai/cmux/main/web/data/cmux.schema.json",
+  "schemaVersion": 1,
+  "app": {
+    "appearance": "dark"
+  },
+  "terminal": {
+    "copyOnSelect": true,
+    "showScrollBar": false
+  },
+  "browser": {
+    "openTerminalLinksInCmuxBrowser": true
+  }
+}

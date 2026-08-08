@@ -141,8 +141,8 @@ if [ -t 0 ]; then
         echo ""
 
         # Core tools
-        ALL_SEL_NAMES=(ghostty  nvim     lazygit  starship fzf      zoxide   eza      bat      fd  rg)
-        ALL_SEL_DESCS=("Ghostty - Terminal emulator" "Neovim - Editor" "Lazygit - Git TUI" "Starship - Shell prompt" "Fzf - Fuzzy finder" "Zoxide - Smart cd" "Eza - Modern ls" "Bat - Modern cat" "Fd - Modern find" "Ripgrep - Code search")
+        ALL_SEL_NAMES=(cmux     herdr    nvim     lazygit  starship fzf      zoxide   eza      bat      fd  rg)
+        ALL_SEL_DESCS=("cmux - Agent terminal" "Herdr - Agent runtime (persistent sessions)" "Neovim - Editor" "Lazygit - Git TUI" "Starship - Shell prompt" "Fzf - Fuzzy finder" "Zoxide - Smart cd" "Eza - Modern ls" "Bat - Modern cat" "Fd - Modern find" "Ripgrep - Code search")
 
         # Monitoring tools
         ALL_SEL_NAMES+=(claude-monitor ccm)
@@ -169,10 +169,10 @@ fi
 step 3 "Installing core tools"
 
 # Parallel arrays (Bash 3.x compatible - no associative arrays)
-TOOL_CMDS=(ghostty   nvim    lazygit  starship  fzf      zoxide    eza       bat       fd   rg)
-TOOL_PKGS=(ghostty   neovim  lazygit  starship  fzf      zoxide    eza       bat       fd   ripgrep)
-TOOL_TYPES=(cask     formula formula  formula   formula  formula   formula   formula   formula formula)
-TOOL_DESCS=("Terminal emulator" "Editor" "Git TUI" "Shell prompt" "Fuzzy finder" "Smart cd" "Modern ls" "Modern cat" "Modern find" "Code search")
+TOOL_CMDS=(cmux      herdr   nvim    lazygit  starship  fzf      zoxide    eza       bat       fd   rg)
+TOOL_PKGS=(cmux      herdr   neovim  lazygit  starship  fzf      zoxide    eza       bat       fd   ripgrep)
+TOOL_TYPES=(cask     formula formula formula  formula   formula  formula   formula   formula   formula formula)
+TOOL_DESCS=("Agent terminal" "Agent runtime" "Editor" "Git TUI" "Shell prompt" "Fuzzy finder" "Smart cd" "Modern ls" "Modern cat" "Modern find" "Code search")
 
 installed_count=0
 skipped_count=0
@@ -207,6 +207,14 @@ while [ $i -lt ${#TOOL_CMDS[@]} ]; do
     fi
     i=$((i + 1))
 done
+
+if ! should_skip "herdr" && ! check_installed herdr; then
+    warn "herdr - or use the official installer: curl -fsSL https://herdr.dev/install.sh | sh"
+fi
+
+if ! should_skip "cmux" && ! check_installed cmux; then
+    warn "cmux - or download the DMG from https://cmux.com"
+fi
 
 echo ""
 info "Installed: $installed_count | Already had: $skipped_count"
@@ -258,33 +266,46 @@ fi
 
 step 5 "Applying configurations"
 
-# Ghostty config
+# Terminal config
+# cmux reads ~/.config/ghostty/config for font, theme and colors, so this one
+# file configures both cmux (default) and Ghostty (fallback terminal).
 GHOSTTY_CONFIG="$HOME/.config/ghostty/config"
 if [ -f "$DENDRITE_DIR/configs/ghostty/config" ]; then
     mkdir -p "$HOME/.config/ghostty"
     if [ -f "$GHOSTTY_CONFIG" ]; then
         echo ""
-        info "Existing Ghostty config found."
+        info "Existing terminal config found (~/.config/ghostty/config)."
         read -p "  Overwrite? (y/N/merge): " ghostty_choice
         case "$ghostty_choice" in
             y|Y)
                 backup_config "$GHOSTTY_CONFIG"
                 cp "$DENDRITE_DIR/configs/ghostty/config" "$GHOSTTY_CONFIG"
-                success "Ghostty config applied"
+                success "Terminal config applied"
                 ;;
             m|merge)
                 backup_config "$GHOSTTY_CONFIG"
                 cat "$DENDRITE_DIR/configs/ghostty/config" >> "$GHOSTTY_CONFIG"
-                success "Ghostty config merged"
+                success "Terminal config merged"
                 ;;
             *)
-                warn "Ghostty config skipped"
+                warn "Terminal config skipped"
                 ;;
         esac
     else
         cp "$DENDRITE_DIR/configs/ghostty/config" "$GHOSTTY_CONFIG"
-        success "Ghostty config applied"
+        success "Terminal config applied"
     fi
+fi
+
+# cmux config
+CMUX_CONFIG="$HOME/.config/cmux/cmux.json"
+if [ -f "$DENDRITE_DIR/configs/cmux/cmux.json" ]; then
+    mkdir -p "$HOME/.config/cmux"
+    if [ -f "$CMUX_CONFIG" ]; then
+        backup_config "$CMUX_CONFIG"
+    fi
+    cp "$DENDRITE_DIR/configs/cmux/cmux.json" "$CMUX_CONFIG"
+    success "cmux config applied"
 fi
 
 # Starship config
@@ -399,7 +420,8 @@ verify_tool() {
     fi
 }
 
-verify_tool "Ghostty" "ghostty"
+verify_tool "cmux" "cmux"
+verify_tool "Herdr" "herdr"
 verify_tool "Neovim" "nvim"
 verify_tool "Lazygit" "lazygit"
 verify_tool "Starship" "starship"
@@ -424,19 +446,30 @@ echo ""
 echo -e "  ${BOLD}Next steps:${RESET}"
 echo ""
 echo "  1. Restart your terminal (or run: source $SHELL_RC)"
-echo "  2. Open Ghostty"
-echo "  3. Try the multi-agent layout:"
+echo "  2. Open cmux"
+echo "  3. One workspace per task, one agent per workspace:"
 echo ""
-echo "     Cmd+Shift+Right    Split right"
-echo "     Cmd+Shift+Down     Split down"
-echo "     Cmd+Arrow           Navigate splits"
+echo "     Cmd+N               New workspace"
+echo "     Cmd+1..9            Jump to workspace"
+echo "     Cmd+D               Split right"
+echo "     Cmd+Shift+D         Split down"
+echo "     Opt+Cmd+Arrow       Focus another pane"
+echo "     Cmd+I               Notifications (agent waiting on you)"
 echo ""
-echo "  4. In each split:"
+echo "  4. In each pane:"
 echo ""
-echo "     Split 1:  claude             # Agent 1"
-echo "     Split 2:  claude             # Agent 2"
-echo "     Split 3:  lazygit            # Git monitoring"
-echo "     Split 4:  claude-monitor     # Token tracking"
+echo "     Pane 1:   claude             # Agent 1"
+echo "     Pane 2:   claude             # Agent 2"
+echo "     Pane 3:   lazygit            # Git monitoring"
+echo "     Pane 4:   claude-monitor     # Token tracking"
+echo ""
+echo "  5. Want agents that survive sleep, disconnects and closed terminals?"
+echo ""
+echo "     herdr                        # start (or reattach to) the runtime"
+echo "     Ctrl+b then v                # split pane right"
+echo "     Ctrl+b then -                # split pane down"
+echo "     Ctrl+b then q                # detach (agents keep running)"
+echo "     herdr session list           # see every session"
 echo ""
 echo -e "  ${BOLD}Useful aliases:${RESET}"
 echo ""
