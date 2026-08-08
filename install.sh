@@ -53,6 +53,18 @@ check_installed() {
     command -v "$1" &> /dev/null
 }
 
+# Terminals ship as .app bundles. cmux links a CLI, Ghostty does not, so
+# command -v is not a reliable check for either one.
+check_app() {
+    [ -d "/Applications/$1.app" ] || [ -d "$HOME/Applications/$1.app" ]
+}
+
+# A cask can be installed as an .app with no CLI linked, so re-running the
+# installer must not treat that as missing.
+tool_present() {
+    check_installed "$1" || { [ "$2" = "cask" ] && check_app "$1"; }
+}
+
 backup_config() {
     local file="$1"
     if [ -f "$file" ]; then
@@ -60,6 +72,61 @@ backup_config() {
         cp "$file" "$backup"
         warn "Backed up $(basename "$file") -> $(basename "$backup")"
     fi
+}
+
+# Put a config in place. An existing file is never replaced without a yes, and
+# a piped install has no tty to answer with, so there it is left alone.
+# Pass a 4th argument to also offer appending instead of replacing.
+apply_config() {
+    local src="$1"
+    local dest="$2"
+    local label="$3"
+    local allow_merge="${4:-}"
+    local choice
+
+    [ -f "$src" ] || return 0
+    mkdir -p "$(dirname "$dest")"
+
+    if [ ! -f "$dest" ]; then
+        cp "$src" "$dest"
+        success "$label applied"
+        return 0
+    fi
+
+    echo ""
+    info "Existing $label found ($dest)."
+    if [ -t 0 ]; then
+        if [ -n "$allow_merge" ]; then
+            read -p "  Overwrite? (y/N/merge): " choice
+        else
+            read -p "  Overwrite? (y/N): " choice
+        fi
+    else
+        choice="n"
+        warn "Non-interactive install - keeping your config"
+    fi
+
+    case "$choice" in
+        y|Y)
+            backup_config "$dest"
+            cp "$src" "$dest"
+            success "$label applied"
+            ;;
+        m|merge)
+            if [ -n "$allow_merge" ]; then
+                backup_config "$dest"
+                cat "$src" >> "$dest"
+                success "$label merged"
+                return 0
+            fi
+            warn "$label skipped - yours is untouched"
+            warn "Dendrite's version: $src"
+            ;;
+        *)
+            warn "$label skipped - yours is untouched"
+            warn "Dendrite's version: $src"
+            ;;
+    esac
 }
 
 TOTAL_STEPS=7
@@ -91,7 +158,19 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     error "Dendrite currently supports macOS only."
     exit 1
 fi
-success "macOS detected"
+
+MACOS_VERSION="$(sw_vers -productVersion 2>/dev/null || echo 0)"
+MACOS_MAJOR="${MACOS_VERSION%%.*}"
+success "macOS $MACOS_VERSION detected"
+
+# cmux requires macOS 14+. Below that, install the rest of the stack and point
+# the user at Ghostty, the fallback terminal.
+CMUX_UNSUPPORTED=0
+if [ "$MACOS_MAJOR" -lt 14 ] 2>/dev/null; then
+    warn "cmux requires macOS 14 or later - installing Ghostty instead"
+    CMUX_UNSUPPORTED=1
+    SKIP_TOOLS="$SKIP_TOOLS cmux"
+fi
 
 # ─────────────────────────────────────────
 # Step 2: Clone or update Dendrite repo
@@ -141,8 +220,8 @@ if [ -t 0 ]; then
         echo ""
 
         # Core tools
-        ALL_SEL_NAMES=(ghostty  nvim     lazygit  starship fzf      zoxide   eza      bat      fd  rg)
-        ALL_SEL_DESCS=("Ghostty - Terminal emulator" "Neovim - Editor" "Lazygit - Git TUI" "Starship - Shell prompt" "Fzf - Fuzzy finder" "Zoxide - Smart cd" "Eza - Modern ls" "Bat - Modern cat" "Fd - Modern find" "Ripgrep - Code search")
+        ALL_SEL_NAMES=(cmux     herdr    nvim     lazygit  starship fzf      zoxide   eza      bat      fd  rg)
+        ALL_SEL_DESCS=("cmux - Agent terminal" "Herdr - Agent runtime (persistent sessions)" "Neovim - Editor" "Lazygit - Git TUI" "Starship - Shell prompt" "Fzf - Fuzzy finder" "Zoxide - Smart cd" "Eza - Modern ls" "Bat - Modern cat" "Fd - Modern find" "Ripgrep - Code search")
 
         # Monitoring tools
         ALL_SEL_NAMES+=(claude-monitor ccm)
@@ -169,10 +248,10 @@ fi
 step 3 "Installing core tools"
 
 # Parallel arrays (Bash 3.x compatible - no associative arrays)
-TOOL_CMDS=(ghostty   nvim    lazygit  starship  fzf      zoxide    eza       bat       fd   rg)
-TOOL_PKGS=(ghostty   neovim  lazygit  starship  fzf      zoxide    eza       bat       fd   ripgrep)
-TOOL_TYPES=(cask     formula formula  formula   formula  formula   formula   formula   formula formula)
-TOOL_DESCS=("Terminal emulator" "Editor" "Git TUI" "Shell prompt" "Fuzzy finder" "Smart cd" "Modern ls" "Modern cat" "Modern find" "Code search")
+TOOL_CMDS=(cmux      herdr   nvim    lazygit  starship  fzf      zoxide    eza       bat       fd   rg)
+TOOL_PKGS=(cmux      herdr   neovim  lazygit  starship  fzf      zoxide    eza       bat       fd   ripgrep)
+TOOL_TYPES=(cask     formula formula formula  formula   formula  formula   formula   formula   formula formula)
+TOOL_DESCS=("Agent terminal" "Agent runtime" "Editor" "Git TUI" "Shell prompt" "Fuzzy finder" "Smart cd" "Modern ls" "Modern cat" "Modern find" "Code search")
 
 installed_count=0
 skipped_count=0
@@ -185,9 +264,9 @@ while [ $i -lt ${#TOOL_CMDS[@]} ]; do
     desc="${TOOL_DESCS[$i]}"
 
     if should_skip "$cmd"; then
-        warn "$desc ($cmd) - skipped by user"
+        warn "$desc ($cmd) - skipped"
         skipped_count=$((skipped_count + 1))
-    elif check_installed "$cmd"; then
+    elif tool_present "$cmd" "$type"; then
         success "$desc ($cmd) - already installed"
         skipped_count=$((skipped_count + 1))
     else
@@ -198,7 +277,7 @@ while [ $i -lt ${#TOOL_CMDS[@]} ]; do
             brew install "$pkg" 2>/dev/null || warn "Failed to install $pkg"
         fi
 
-        if check_installed "$cmd"; then
+        if tool_present "$cmd" "$type"; then
             success "$desc ($cmd) - installed"
             installed_count=$((installed_count + 1))
         else
@@ -207,6 +286,21 @@ while [ $i -lt ${#TOOL_CMDS[@]} ]; do
     fi
     i=$((i + 1))
 done
+
+if ! should_skip "herdr" && ! check_installed herdr; then
+    warn "herdr - or use the official installer: curl -fsSL https://herdr.dev/install.sh | sh"
+fi
+
+if [ "$CMUX_UNSUPPORTED" = "1" ]; then
+    if check_app "Ghostty"; then
+        success "Ghostty (fallback terminal) - already installed"
+    else
+        info "Installing Ghostty (fallback terminal)..."
+        brew install --cask ghostty 2>/dev/null || warn "Failed to install ghostty"
+    fi
+elif ! should_skip "cmux" && ! check_installed cmux && ! check_app "cmux"; then
+    warn "cmux - or download the DMG from https://cmux.com"
+fi
 
 echo ""
 info "Installed: $installed_count | Already had: $skipped_count"
@@ -258,56 +352,28 @@ fi
 
 step 5 "Applying configurations"
 
-# Ghostty config
-GHOSTTY_CONFIG="$HOME/.config/ghostty/config"
-if [ -f "$DENDRITE_DIR/configs/ghostty/config" ]; then
-    mkdir -p "$HOME/.config/ghostty"
-    if [ -f "$GHOSTTY_CONFIG" ]; then
-        echo ""
-        info "Existing Ghostty config found."
-        read -p "  Overwrite? (y/N/merge): " ghostty_choice
-        case "$ghostty_choice" in
-            y|Y)
-                backup_config "$GHOSTTY_CONFIG"
-                cp "$DENDRITE_DIR/configs/ghostty/config" "$GHOSTTY_CONFIG"
-                success "Ghostty config applied"
-                ;;
-            m|merge)
-                backup_config "$GHOSTTY_CONFIG"
-                cat "$DENDRITE_DIR/configs/ghostty/config" >> "$GHOSTTY_CONFIG"
-                success "Ghostty config merged"
-                ;;
-            *)
-                warn "Ghostty config skipped"
-                ;;
-        esac
-    else
-        cp "$DENDRITE_DIR/configs/ghostty/config" "$GHOSTTY_CONFIG"
-        success "Ghostty config applied"
-    fi
+# Terminal config. cmux reads ~/.config/ghostty/config for font, theme and
+# colors, so this one file configures both cmux and Ghostty. Mergeable because
+# it is a flat list of key = value lines.
+apply_config "$DENDRITE_DIR/configs/ghostty/config" \
+             "$HOME/.config/ghostty/config" \
+             "terminal config" merge
+
+# cmux config. Not mergeable: cmux.json holds app preferences and custom
+# commands that cannot be concatenated.
+if check_app "cmux" || check_installed cmux; then
+    apply_config "$DENDRITE_DIR/configs/cmux/cmux.json" \
+                 "$HOME/.config/cmux/cmux.json" \
+                 "cmux config"
 fi
 
-# Starship config
-STARSHIP_CONFIG="$HOME/.config/starship.toml"
-if [ -f "$DENDRITE_DIR/configs/starship/starship.toml" ]; then
-    mkdir -p "$HOME/.config"
-    if [ -f "$STARSHIP_CONFIG" ]; then
-        backup_config "$STARSHIP_CONFIG"
-    fi
-    cp "$DENDRITE_DIR/configs/starship/starship.toml" "$STARSHIP_CONFIG"
-    success "Starship config applied"
-fi
+apply_config "$DENDRITE_DIR/configs/starship/starship.toml" \
+             "$HOME/.config/starship.toml" \
+             "Starship config"
 
-# Lazygit config
-LAZYGIT_CONFIG="$HOME/Library/Application Support/lazygit/config.yml"
-if [ -f "$DENDRITE_DIR/configs/lazygit/config.yml" ]; then
-    mkdir -p "$HOME/Library/Application Support/lazygit"
-    if [ -f "$LAZYGIT_CONFIG" ]; then
-        backup_config "$LAZYGIT_CONFIG"
-    fi
-    cp "$DENDRITE_DIR/configs/lazygit/config.yml" "$LAZYGIT_CONFIG"
-    success "Lazygit config applied"
-fi
+apply_config "$DENDRITE_DIR/configs/lazygit/config.yml" \
+             "$HOME/Library/Application Support/lazygit/config.yml" \
+             "Lazygit config"
 
 
 # ─────────────────────────────────────────
@@ -399,7 +465,22 @@ verify_tool() {
     fi
 }
 
-verify_tool "Ghostty" "ghostty"
+verify_app() {
+    local name="$1"
+    local app="$2"
+    if check_app "$app"; then
+        printf "  %-20s ${GREEN}%-12s${RESET} %-10s\n" "$name" "installed" "$app.app"
+    else
+        printf "  %-20s ${RED}%-12s${RESET} %-10s\n" "$name" "missing" "$app.app"
+    fi
+}
+
+if should_skip cmux; then
+    verify_app "Ghostty (fallback)" "Ghostty"
+else
+    verify_app "cmux" "cmux"
+fi
+verify_tool "Herdr" "herdr"
 verify_tool "Neovim" "nvim"
 verify_tool "Lazygit" "lazygit"
 verify_tool "Starship" "starship"
@@ -424,19 +505,52 @@ echo ""
 echo -e "  ${BOLD}Next steps:${RESET}"
 echo ""
 echo "  1. Restart your terminal (or run: source $SHELL_RC)"
-echo "  2. Open Ghostty"
-echo "  3. Try the multi-agent layout:"
+
+if ! check_app "cmux" && ! check_installed cmux; then
+    if check_app "Ghostty"; then
+echo "  2. Open Ghostty (cmux is not installed)"
+echo "  3. Build the multi-agent layout:"
 echo ""
-echo "     Cmd+Shift+Right    Split right"
-echo "     Cmd+Shift+Down     Split down"
+echo "     Cmd+Shift+Right     Split right"
+echo "     Cmd+Shift+Down      Split down"
 echo "     Cmd+Arrow           Navigate splits"
+echo "     Cmd+Shift+E         Equalize splits"
 echo ""
-echo "  4. In each split:"
+    else
+echo "  2. No Dendrite terminal is installed. Use your own, or install one:"
 echo ""
-echo "     Split 1:  claude             # Agent 1"
-echo "     Split 2:  claude             # Agent 2"
-echo "     Split 3:  lazygit            # Git monitoring"
-echo "     Split 4:  claude-monitor     # Token tracking"
+echo "     brew install --cask cmux       # the agent terminal, macOS 14+"
+echo "     brew install --cask ghostty    # the general-purpose fallback"
+echo ""
+echo "  3. Everything else in the stack works in any terminal."
+echo ""
+    fi
+else
+echo "  2. Open cmux"
+echo "  3. One workspace per task, one agent per workspace:"
+echo ""
+echo "     Cmd+N               New workspace"
+echo "     Cmd+1..9            Jump to workspace"
+echo "     Cmd+D               Split right"
+echo "     Cmd+Shift+D         Split down"
+echo "     Opt+Cmd+Arrow       Focus another pane"
+echo "     Cmd+I               Notifications (agent waiting on you)"
+echo ""
+fi
+echo "  4. In each pane:"
+echo ""
+echo "     Pane 1:   claude             # Agent 1"
+echo "     Pane 2:   claude             # Agent 2"
+echo "     Pane 3:   lazygit            # Git monitoring"
+echo "     Pane 4:   claude-monitor     # Token tracking"
+echo ""
+echo "  5. Want agents that survive sleep, disconnects and closed terminals?"
+echo ""
+echo "     herdr                        # start (or reattach to) the runtime"
+echo "     Ctrl+b then v                # split pane right"
+echo "     Ctrl+b then -                # split pane down"
+echo "     Ctrl+b then q                # detach (agents keep running)"
+echo "     herdr session list           # see every session"
 echo ""
 echo -e "  ${BOLD}Useful aliases:${RESET}"
 echo ""

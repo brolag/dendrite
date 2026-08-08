@@ -170,8 +170,8 @@
     },
     {
       "id": "shell-009",
-      "name": "install-script-all-12-tools",
-      "description": "install.sh must reference all 12 tools in the stack",
+      "name": "install-script-all-13-tools",
+      "description": "install.sh must reference all 13 tools in the stack",
       "tags": ["shell", "completeness"],
       "difficulty": "medium",
       "type": "script",
@@ -228,6 +228,18 @@
       "phase": "pass_to_pass",
       "test": {
         "script": ".claude/eval/validators/check-yaml-valid.sh"
+      }
+    },
+    {
+      "id": "config-004",
+      "name": "cmux-config-valid",
+      "description": "cmux config must exist and be valid JSONC",
+      "tags": ["config", "critical"],
+      "difficulty": "easy",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-cmux-config-valid.sh"
       }
     },
     {

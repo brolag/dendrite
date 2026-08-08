@@ -4,19 +4,66 @@ Deep dive into each tool in the Dendrite stack and why it was chosen.
 
 ---
 
-## Terminal: Ghostty
+## Terminal: cmux
 
-**Why Ghostty over iTerm2/Kitty/Alacritty?**
+**Why cmux over Ghostty/iTerm2/Kitty?**
 
-- GPU-accelerated rendering via Metal (macOS native)
-- Built-in splits without tmux or zellij
-- Plain text config (`key = value`)
-- Created by Mitchell Hashimoto (HashiCorp founder)
-- Lightweight (~50MB vs iTerm2 ~200MB)
+- Built on Ghostty, so you keep the Metal GPU renderer and its config format
+- One vertical tab per workspace, showing git branch, PR status and open ports
+- The pane rings and the sidebar badges when an agent is waiting on you
+- CLI and Unix socket API: agents can create workspaces, split panes and send keys
+- Built-in browser pane an agent can drive against your dev server
+- Free and open source (GPL-3.0-or-later), macOS 14+
 
-**Config location:** `~/.config/ghostty/config`
+**Config locations:**
 
-**Key feature for agents:** Native splits let you run 2-3 Claude Code instances side by side with one keypress to navigate between them.
+- `~/.config/ghostty/config` — font, theme, colors (inherited from Ghostty)
+- `~/.config/cmux/cmux.json` — sidebar, terminal and browser behavior
+- `.cmux/cmux.json` — optional per-project overrides
+
+**Key feature for agents:** you stop babysitting panes. Run one agent per workspace and let cmux tell you which one stopped to ask a question, instead of cycling through splits to check.
+
+**Useful CLI:**
+
+```bash
+cmux list-workspaces          # every open workspace
+cmux new-split right          # split the focused pane
+cmux send "yes"               # type into the focused terminal
+cmux notify --title "Build" --body "done"
+```
+
+**Prefer a general-purpose terminal?** Install Ghostty instead and skip cmux. Dendrite's `~/.config/ghostty/config` is written in Ghostty's format precisely so it works with either one. You lose the workspace sidebar, the agent notifications and the scripting API, and nothing else in the stack changes.
+
+---
+
+## Agent Runtime: herdr
+
+**Why herdr?**
+
+- Agents keep running when your machine sleeps, SSH drops or you close the window
+- Reattach from any device, including a thin client over `herdr --remote <host>`
+- Named sessions are fully separate runtime namespaces
+- Detects 19+ agent CLIs out of the box, no wrapper around Claude Code needed
+- Reports agent status (working, blocked, idle) through a socket API
+- Apache-2.0
+
+**Command:** `herdr` (launches or reattaches to the default session)
+
+**Keybindings:** prefix is `Ctrl+B`. Then `v` splits right, `-` splits down, `c` opens a tab, `q` detaches, `?` lists every binding.
+
+**Useful CLI:**
+
+```bash
+herdr session list            # every session
+herdr session attach work     # attach to a named one
+herdr agent list              # which agents are working or blocked
+herdr agent prompt <target> "continue"
+herdr server stop             # stop the background server
+```
+
+**Key feature for agents:** a long refactor survives your commute. Detach on the laptop, reattach on another machine, the agent never noticed.
+
+**cmux or herdr for panes?** cmux is the app you look at, herdr is the process that keeps agents alive. Use cmux panes for everyday work and start `herdr` inside a pane when a task must outlive the window.
 
 ---
 
@@ -24,7 +71,7 @@ Deep dive into each tool in the Dendrite stack and why it was chosen.
 
 **Why Neovim over VS Code/Cursor?**
 
-- Runs in the terminal (stays in Ghostty)
+- Runs in the terminal (stays in cmux)
 - Modal editing is faster once learned
 - LazyVim provides a sane default config
 - Avante plugin for AI integration

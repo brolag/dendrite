@@ -19,13 +19,14 @@ When the user triggers this skill, present the lesson menu:
 
   Choose a lesson:
 
-  1. Ghostty Basics       - Splits, tabs, navigation
+  1. cmux Basics          - Workspaces, panes, notifications
   2. Shell Power-ups      - fzf, zoxide, starship, aliases
   3. Lazygit              - Visual git in the terminal
   4. Neovim Essentials    - Navigate, edit, review
   5. Multi-Agent Setup    - Worktrees + parallel agents
-  6. Monitoring           - claude-monitor + ccm
-  7. Full Workflow         - Put it all together
+  6. Persistent Sessions  - herdr, agents that survive
+  7. Monitoring           - claude-monitor + ccm
+  8. Full Workflow         - Put it all together
 
   Type a number to start, or "q" to quit.
 ```
@@ -40,50 +41,62 @@ Each lesson follows this pattern:
 4. **Verify** (check if it worked)
 5. **Next** (move to next concept)
 
-## Lesson 1: Ghostty Basics
+## Lesson 1: cmux Basics
 
-### 1.1 Creating Splits
+### 1.1 One Workspace Per Task
 
-Explain: Ghostty has built-in splits. No tmux needed.
+Explain: cmux is a Ghostty-based terminal built for agents. A workspace is one task, and the sidebar shows its branch, PR and ports.
 
 ```
 Try this now:
 
-  Cmd + Shift + Right    (creates a split to the right)
-  Cmd + Left             (go back to the left split)
-  Cmd + Shift + Down     (creates a split below)
+  Cmd + N          (new workspace)
+  Cmd + O          (open the folder you want to work in)
+  Cmd + 1          (jump back to the first workspace)
 ```
 
-Ask: "Did you see three panels? Type 'yes' to continue."
+Ask: "Do you see both workspaces in the left sidebar? Type 'yes' to continue."
 
-### 1.2 Navigating Splits
-
-```
-Navigate between your 3 splits:
-
-  Cmd + Right      (go right)
-  Cmd + Left       (go left)
-  Cmd + Up         (go up)
-  Cmd + Down       (go down)
-```
-
-### 1.3 Resizing and Equalizing
+### 1.2 Creating Panes
 
 ```
-Resize a split:
+Split the workspace:
 
-  Cmd + Ctrl + Right     (make wider)
-  Cmd + Ctrl + Left      (make narrower)
-  Cmd + Shift + E        (equalize all splits)
+  Cmd + D                (split right)
+  Cmd + Shift + D        (split down)
 ```
 
-### 1.4 Closing Splits
+### 1.3 Navigating Panes
 
 ```
-Close a split:
+Move between panes:
 
-  Cmd + Shift + W
+  Opt + Cmd + Right      (focus right)
+  Opt + Cmd + Left       (focus left)
+  Opt + Cmd + Up         (focus up)
+  Opt + Cmd + Down       (focus down)
+  Cmd + Shift + Enter    (zoom the focused pane)
 ```
+
+### 1.4 Notifications
+
+Explain: this is the reason cmux is in the stack. You do not have to watch panes.
+
+```
+When an agent finishes or asks a question, its pane rings.
+
+  Cmd + I                (open notifications)
+  Cmd + Shift + U        (jump to the latest unread)
+```
+
+### 1.5 Closing
+
+```
+Close a tab:         Cmd + W
+Close a workspace:   Cmd + Shift + W
+```
+
+Note: if the user runs plain Ghostty instead of cmux, use `Cmd+Shift+Right` / `Cmd+Shift+Down` to split, `Cmd+Arrow` to navigate, and skip the workspace and notification steps.
 
 ## Lesson 2: Shell Power-ups
 
@@ -193,28 +206,66 @@ wt-new api                Create worktree for API feature
 wt-list                   See both worktrees
 ```
 
-### 5.2 The 4-Panel Layout
+### 5.2 The 4-Pane Layout
 
 ```
-1. Cmd+Shift+Right         Split right
-2. Cmd+Left                Go left
-3. Cmd+Shift+Down          Split below-left
-4. Cmd+Right               Go right
-5. Cmd+Shift+Down          Split below-right
+1. Cmd+N                   New workspace for the task
+2. Cmd+D                   Split right
+3. Cmd+Shift+D             Split below-left
+4. Opt+Cmd+Right           Focus right
+5. Cmd+Shift+D             Split below-right
 ```
 
 ### 5.3 Start Agents
 
 ```
-Panel 1: cd .worktrees/auth && claude
-Panel 2: cd .worktrees/api && claude
-Panel 3: lazygit
-Panel 4: claude-monitor
+Pane 1: cd .worktrees/auth && claude
+Pane 2: cd .worktrees/api && claude
+Pane 3: lazygit
+Pane 4: claude-monitor
 ```
 
-## Lesson 6: Monitoring
+## Lesson 6: Persistent Sessions
 
-### 6.1 Token Monitoring
+### 6.1 Why herdr
+
+Explain: a terminal window dies with the app. herdr runs a background server that owns the panes, so agents keep working through sleep, SSH drops and closed windows.
+
+```
+Run: herdr
+
+You are now inside the default session. The prefix is Ctrl+B.
+```
+
+### 6.2 Panes Inside herdr
+
+```
+Ctrl+B then v      Split pane right
+Ctrl+B then -      Split pane down
+Ctrl+B then c      New tab
+Ctrl+B then ?      Show every binding
+```
+
+### 6.3 Detach and Reattach
+
+```
+Ctrl+B then q      Detach (agents keep running)
+herdr              Reattach where you left off
+```
+
+Ask: "Start a long command, detach, then reattach. Is it still running?"
+
+### 6.4 Inspecting Sessions
+
+```
+herdr session list         All sessions
+herdr agent list           Which agents are working, blocked or idle
+herdr status               Runtime state
+```
+
+## Lesson 7: Monitoring
+
+### 7.1 Token Monitoring
 
 ```
 Run: cm (or claude-monitor)
@@ -222,7 +273,7 @@ Run: cm (or claude-monitor)
 Shows: burn rate, predictions, limits.
 ```
 
-### 6.2 Session Monitoring
+### 7.2 Session Monitoring
 
 ```
 Run: ccm
@@ -230,14 +281,14 @@ Run: ccm
 Shows: all active Claude Code sessions, status, messages.
 ```
 
-## Lesson 7: Full Workflow
+## Lesson 8: Full Workflow
 
 Walk through a complete multi-agent task from start to finish:
 
 1. Create worktrees for 2 independent features
-2. Open 4-panel layout in Ghostty
-3. Start agents with clear task descriptions
-4. Monitor progress in Lazygit
+2. Open a cmux workspace and split it into 4 panes
+3. Start agents with clear task descriptions (inside herdr if the task is long)
+4. Monitor progress in Lazygit, let cmux notifications tell you who is blocked
 5. Review changes in Neovim
 6. Merge when complete
 7. Clean up worktrees
@@ -246,6 +297,9 @@ Walk through a complete multi-agent task from start to finish:
 
 | Error | Cause | Resolution |
 |-------|-------|------------|
+| cmux shortcuts don't work | Config not reloaded | `Cmd+Shift+,` or `cmux reload-config` |
+| cmux font/theme wrong | Reads Ghostty config | Fix `~/.config/ghostty/config` |
+| herdr can't attach | Server not running | `herdr status`, then `herdr server` |
 | Keybindings don't work | Ghostty loaded old config | Quit and reopen Ghostty (Cmd+Q) |
 | Starship not showing | Shell not sourced | Run `source ~/.zshrc` |
 | claude-monitor crashes | Too many JSONL files | Use `NODE_OPTIONS="--max-old-space-size=8192"` |

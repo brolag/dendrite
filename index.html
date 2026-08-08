@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dendrite - Opinionated TUI Stack for Agentic Coding</title>
-    <meta name="description" content="One command. 12 tools. Zero config. An opinionated TUI stack for agentic coding with AI agents.">
+    <meta name="description" content="One command. 13 tools. Zero config. An opinionated TUI stack for agentic coding with AI agents.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
@@ -865,13 +865,14 @@
             OPEN_SOURCE // MIT_LICENSE
         </div>
 
-        <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1rem; letter-spacing: 2px;">ONE COMMAND. 12 TOOLS. ZERO CONFIG.</p>
+        <p style="font-size: 0.9rem; color: var(--text-dim); margin-bottom: 1rem; letter-spacing: 2px;">ONE COMMAND. 13 TOOLS. ZERO CONFIG.</p>
         <h1>YOUR TERMINAL, READY FOR<br><span class="highlight glow">AI CODING AGENTS.</span></h1>
         <p class="hero-subtitle">
             > One command installs and configures your terminal, editor, git tools, and monitoring — everything you need to run AI coding agents like Claude Code._
         </p>
         <div style="display: flex; gap: 2rem; flex-wrap: wrap; justify-content: center; margin-bottom: 2rem; font-size: 0.85rem; color: var(--text-dim);">
-            <span>Terminal <span style="color: var(--matrix-green);">Ghostty</span></span>
+            <span>Terminal <span style="color: var(--matrix-green);">cmux</span></span>
+            <span>Runtime <span style="color: var(--matrix-green);">herdr</span></span>
             <span>Editor <span style="color: var(--matrix-green);">Neovim</span></span>
             <span>Git <span style="color: var(--matrix-green);">Lazygit</span></span>
             <span>Shell <span style="color: var(--matrix-green);">Zsh</span></span>
@@ -893,7 +894,7 @@
                 <span class="terminal-dot red"></span>
                 <span class="terminal-dot yellow"></span>
                 <span class="terminal-dot green"></span>
-                <span class="terminal-title">ghostty &mdash; dendrite v0.1.0 &mdash; click to interact</span>
+                <span class="terminal-title">cmux &mdash; dendrite v0.1.0 &mdash; click to interact</span>
             </div>
             <div class="terminal-body" id="terminal-output">
                 <div class="terminal-line">
@@ -906,7 +907,7 @@
                     <span class="output">[2/7] Setting up Dendrite................. </span><span class="success">OK</span>
                 </div>
                 <div class="terminal-line">
-                    <span class="output">[3/7] Installing core tools............... </span><span class="success">10/10</span>
+                    <span class="output">[3/7] Installing core tools............... </span><span class="success">11/11</span>
                 </div>
                 <div class="terminal-line">
                     <span class="output">[4/7] Installing monitoring tools......... </span><span class="success">2/2</span>
@@ -918,7 +919,7 @@
                     <span class="output">[6/7] Configuring shell................... </span><span class="success">OK</span>
                 </div>
                 <div class="terminal-line">
-                    <span class="output">[7/7] Verifying installation.............. </span><span class="success">12/12</span>
+                    <span class="output">[7/7] Verifying installation.............. </span><span class="success">13/13</span>
                 </div>
                 <div class="terminal-line">
                     <span class="dim">---</span>
@@ -938,15 +939,15 @@
     <section class="section layout-section">
         <div class="section-header">
             <h2>WHAT_YOU_GET</h2>
-            <p>> 4 Ghostty splits. 2 agents. Full visibility._</p>
+            <p>> 4 cmux panes. 2 agents. Full visibility._</p>
         </div>
 <pre class="layout-art">
 +---------------------------------------------------+
-|                     GHOSTTY                       |
+|                      CMUX                         |
 | +----------------------+----------------------+   |
 | |  <span class="success">$ claude</span>            |  <span class="success">$ claude</span>            |   |
 | |                      |                      |   |
-| |  Agent 1             |  Agent 2             |   |
+| |  Agent 1             |  Agent 2 <span class="warn">* waiting</span>   |   |
 | |  (worktree/auth)     |  (worktree/api)      |   |
 | +----------------------+----------------------+   |
 | |  <span class="warn">LAZYGIT</span>             |  <span style="color:#f778ba">CLAUDE-MONITOR</span>      |   |
@@ -958,7 +959,7 @@
 </pre>
         <div class="layout-grid">
             <div class="layout-grid-outer">
-                <div class="layout-grid-title">GHOSTTY</div>
+                <div class="layout-grid-title">CMUX</div>
                 <div class="layout-grid-inner">
                     <div class="layout-grid-cell">
                         <div class="cell-cmd">$ claude</div>
@@ -970,7 +971,7 @@
                     <div class="layout-grid-cell">
                         <div class="cell-cmd">$ claude</div>
                         <div class="cell-detail">
-                            Agent 2<br>
+                            Agent 2 <span class="warn">* waiting</span><br>
                             (worktree/api)
                         </div>
                     </div>
@@ -999,14 +1000,19 @@
     <section id="stack" class="section">
         <div class="section-header">
             <h2>THE_STACK</h2>
-            <p>> 12 tools, each the best at what it does_</p>
+            <p>> 13 tools, each the best at what it does_</p>
         </div>
 
         <div class="stack-grid">
             <div class="stack-card">
                 <div class="layer">Terminal</div>
-                <code>Ghostty</code>
-                <p>GPU splits, no tmux</p>
+                <code>cmux</code>
+                <p>Workspace per agent, alerts</p>
+            </div>
+            <div class="stack-card">
+                <div class="layer">Agent Runtime</div>
+                <code>herdr</code>
+                <p>Sessions that survive anything</p>
             </div>
             <div class="stack-card">
                 <div class="layer">Editor</div>
@@ -1075,13 +1081,21 @@
 
         <div class="keys-grid">
             <div class="keys-block">
-                <h3>GHOSTTY SPLITS</h3>
-                <div class="key-row"><span class="key">Cmd+Shift+Right</span><span class="action">Split right</span></div>
-                <div class="key-row"><span class="key">Cmd+Shift+Down</span><span class="action">Split down</span></div>
-                <div class="key-row"><span class="key">Cmd+Arrow</span><span class="action">Navigate splits</span></div>
-                <div class="key-row"><span class="key">Cmd+Ctrl+Arrow</span><span class="action">Resize splits</span></div>
-                <div class="key-row"><span class="key">Cmd+Shift+E</span><span class="action">Equalize splits</span></div>
-                <div class="key-row"><span class="key">Cmd+Shift+W</span><span class="action">Close split</span></div>
+                <h3>CMUX WORKSPACES</h3>
+                <div class="key-row"><span class="key">Cmd+N</span><span class="action">New workspace</span></div>
+                <div class="key-row"><span class="key">Cmd+1..9</span><span class="action">Go to workspace</span></div>
+                <div class="key-row"><span class="key">Cmd+D</span><span class="action">Split right</span></div>
+                <div class="key-row"><span class="key">Cmd+Shift+D</span><span class="action">Split down</span></div>
+                <div class="key-row"><span class="key">Opt+Cmd+Arrow</span><span class="action">Focus another pane</span></div>
+                <div class="key-row"><span class="key">Cmd+I</span><span class="action">Notifications</span></div>
+            </div>
+            <div class="keys-block">
+                <h3>HERDR (PREFIX CTRL+B)</h3>
+                <div class="key-row"><span class="key">Ctrl+B then v</span><span class="action">Split pane right</span></div>
+                <div class="key-row"><span class="key">Ctrl+B then -</span><span class="action">Split pane down</span></div>
+                <div class="key-row"><span class="key">Ctrl+B then c</span><span class="action">New tab</span></div>
+                <div class="key-row"><span class="key">Ctrl+B then q</span><span class="action">Detach, keep running</span></div>
+                <div class="key-row"><span class="key">Ctrl+B then ?</span><span class="action">All bindings</span></div>
             </div>
             <div class="keys-block">
                 <h3>LAZYGIT</h3>
@@ -1129,29 +1143,36 @@
             <div class="workflow-step">
                 <div class="step-num">2</div>
                 <div class="step-content">
-                    <h4>Open 4-panel layout in Ghostty</h4>
-                    <p>Cmd+Shift+Right, Cmd+Left, Cmd+Shift+Down, repeat</p>
+                    <h4>Open a cmux workspace per task</h4>
+                    <p>Cmd+N for the workspace, then Cmd+D and Cmd+Shift+D to split it into 4 panes</p>
                 </div>
             </div>
             <div class="workflow-step">
                 <div class="step-num">3</div>
                 <div class="step-content">
-                    <h4>Start agents in each panel</h4>
-                    <p>Panel 1: <code>cd .worktrees/auth && claude</code><br>
-                    Panel 2: <code>cd .worktrees/api && claude</code><br>
-                    Panel 3: <code>lg</code> (lazygit)<br>
-                    Panel 4: <code>cm</code> (claude-monitor)</p>
+                    <h4>Start agents in each pane</h4>
+                    <p>Pane 1: <code>cd .worktrees/auth && claude</code><br>
+                    Pane 2: <code>cd .worktrees/api && claude</code><br>
+                    Pane 3: <code>lg</code> (lazygit)<br>
+                    Pane 4: <code>cm</code> (claude-monitor)</p>
                 </div>
             </div>
             <div class="workflow-step">
                 <div class="step-num">4</div>
                 <div class="step-content">
-                    <h4>Watch lazygit for real-time changes</h4>
-                    <p>See diffs as agents write code. Stage, review, commit.</p>
+                    <h4>Watch lazygit, let cmux page you</h4>
+                    <p>See diffs as agents write code. The pane rings when an agent stops to ask something (Cmd+I).</p>
                 </div>
             </div>
             <div class="workflow-step">
                 <div class="step-num">5</div>
+                <div class="step-content">
+                    <h4>Long task? Run it inside herdr</h4>
+                    <p><code>herdr</code> keeps agents alive through sleep, SSH drops and closed windows. Reattach from any device.</p>
+                </div>
+            </div>
+            <div class="workflow-step">
+                <div class="step-num">6</div>
                 <div class="step-content">
                     <h4>Merge when done</h4>
                     <p><code>git merge feature/auth && git merge feature/api</code></p>
@@ -1367,7 +1388,7 @@
             help: () => {
                 addLine('Available commands:', 'success');
                 addLine('  help       Show this menu');
-                addLine('  stack      List all 12 tools');
+                addLine('  stack      List all 13 tools');
                 addLine('  install    Show install command');
                 addLine('  workflow   Multi-agent setup steps');
                 addLine('  aliases    Show shell aliases');
@@ -1385,7 +1406,8 @@
             stack: () => {
                 addLine('[THE DENDRITE STACK]', 'success');
                 const tools = [
-                    ['Ghostty', 'GPU terminal, native splits'],
+                    ['cmux', 'Agent terminal, workspaces'],
+                    ['herdr', 'Persistent agent sessions'],
                     ['Neovim', 'Modal editing + LazyVim'],
                     ['Lazygit', 'Git TUI, real-time diffs'],
                     ['claude-monitor', 'Token burn rate'],
@@ -1412,12 +1434,13 @@
             workflow: () => {
                 addLine('[MULTI-AGENT WORKFLOW]', 'success');
                 addLine('  1. wt-new auth && wt-new api');
-                addLine('  2. Open 4 Ghostty splits');
+                addLine('  2. cmux: Cmd+N, then Cmd+D / Cmd+Shift+D for 4 panes');
                 addLine('  3. Agent 1: cd .worktrees/auth && claude');
                 addLine('  4. Agent 2: cd .worktrees/api && claude');
-                addLine('  5. Panel 3: lg (lazygit)');
-                addLine('  6. Panel 4: cm (claude-monitor)');
-                addLine('  7. Watch, merge, clean up');
+                addLine('  5. Pane 3: lg (lazygit)');
+                addLine('  6. Pane 4: cm (claude-monitor)');
+                addLine('  7. Long task? run it inside herdr');
+                addLine('  8. Watch, merge, clean up');
             },
 
             aliases: () => {
@@ -1530,11 +1553,12 @@
                 addLine('  <span class="success">dendrite</span> v0.1.0', 'output');
                 addLine('  ──────────────', 'dim');
                 addLine('  OS: macOS (required)', 'output');
-                addLine('  Terminal: Ghostty', 'output');
+                addLine('  Terminal: cmux', 'output');
+                addLine('  Runtime: herdr', 'output');
                 addLine('  Shell: Zsh + Starship', 'output');
                 addLine('  Editor: Neovim + LazyVim', 'output');
                 addLine('  Git: Lazygit', 'output');
-                addLine('  Tools: 12 installed', 'output');
+                addLine('  Tools: 13 installed', 'output');
                 addLine('  Agents: As many as you dare', 'output');
             },
         };
