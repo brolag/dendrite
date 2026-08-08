@@ -282,6 +282,9 @@ Lazygit      ~/Library/.../lazygit/config.yml  Theme, refresh
 The terminal config uses Ghostty's format because cmux reads it for font, theme and
 colors. The same file configures Ghostty if you use it as your fallback terminal.
 
+Existing configs are never replaced without a yes. In a piped install, where there
+is no way to answer, yours are kept untouched.
+
 ---
 
 ## Docs
@@ -304,10 +307,9 @@ Q: Do I need all these tools?
 A: The installer skips what you already have. But they work best together.
 
 Q: Will this mess up my existing configs?
-A: Everything is backed up before changes, next to the original as
-   <name>.dendrite-backup.<timestamp>. Terminal and cmux configs ask before
-   overwriting and are never touched in a piped install. Starship and Lazygit
-   configs are replaced after backup.
+A: No config you already have is replaced without a yes. A piped install has no
+   way to ask, so there they are all left alone. When you do say yes, the
+   original is backed up next to it as <name>.dendrite-backup.<timestamp>.
 
 Q: Does this work on Linux?
 A: macOS only for now. Linux support is planned.

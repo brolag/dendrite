@@ -74,6 +74,61 @@ backup_config() {
     fi
 }
 
+# Put a config in place. An existing file is never replaced without a yes, and
+# a piped install has no tty to answer with, so there it is left alone.
+# Pass a 4th argument to also offer appending instead of replacing.
+apply_config() {
+    local src="$1"
+    local dest="$2"
+    local label="$3"
+    local allow_merge="${4:-}"
+    local choice
+
+    [ -f "$src" ] || return 0
+    mkdir -p "$(dirname "$dest")"
+
+    if [ ! -f "$dest" ]; then
+        cp "$src" "$dest"
+        success "$label applied"
+        return 0
+    fi
+
+    echo ""
+    info "Existing $label found ($dest)."
+    if [ -t 0 ]; then
+        if [ -n "$allow_merge" ]; then
+            read -p "  Overwrite? (y/N/merge): " choice
+        else
+            read -p "  Overwrite? (y/N): " choice
+        fi
+    else
+        choice="n"
+        warn "Non-interactive install - keeping your config"
+    fi
+
+    case "$choice" in
+        y|Y)
+            backup_config "$dest"
+            cp "$src" "$dest"
+            success "$label applied"
+            ;;
+        m|merge)
+            if [ -n "$allow_merge" ]; then
+                backup_config "$dest"
+                cat "$src" >> "$dest"
+                success "$label merged"
+                return 0
+            fi
+            warn "$label skipped - yours is untouched"
+            warn "Dendrite's version: $src"
+            ;;
+        *)
+            warn "$label skipped - yours is untouched"
+            warn "Dendrite's version: $src"
+            ;;
+    esac
+}
+
 TOTAL_STEPS=7
 
 # Tools to skip (populated by interactive selection)
@@ -297,96 +352,28 @@ fi
 
 step 5 "Applying configurations"
 
-# Terminal config
-# cmux reads ~/.config/ghostty/config for font, theme and colors, so this one
-# file configures both cmux (default) and Ghostty (fallback terminal).
-GHOSTTY_CONFIG="$HOME/.config/ghostty/config"
-if [ -f "$DENDRITE_DIR/configs/ghostty/config" ]; then
-    mkdir -p "$HOME/.config/ghostty"
-    if [ -f "$GHOSTTY_CONFIG" ]; then
-        echo ""
-        info "Existing terminal config found (~/.config/ghostty/config)."
-        if [ -t 0 ]; then
-            read -p "  Overwrite? (y/N/merge): " ghostty_choice
-        else
-            ghostty_choice="n"
-            warn "Non-interactive install - keeping your config"
-        fi
-        case "$ghostty_choice" in
-            y|Y)
-                backup_config "$GHOSTTY_CONFIG"
-                cp "$DENDRITE_DIR/configs/ghostty/config" "$GHOSTTY_CONFIG"
-                success "Terminal config applied"
-                ;;
-            m|merge)
-                backup_config "$GHOSTTY_CONFIG"
-                cat "$DENDRITE_DIR/configs/ghostty/config" >> "$GHOSTTY_CONFIG"
-                success "Terminal config merged"
-                ;;
-            *)
-                warn "Terminal config skipped"
-                ;;
-        esac
-    else
-        cp "$DENDRITE_DIR/configs/ghostty/config" "$GHOSTTY_CONFIG"
-        success "Terminal config applied"
-    fi
+# Terminal config. cmux reads ~/.config/ghostty/config for font, theme and
+# colors, so this one file configures both cmux and Ghostty. Mergeable because
+# it is a flat list of key = value lines.
+apply_config "$DENDRITE_DIR/configs/ghostty/config" \
+             "$HOME/.config/ghostty/config" \
+             "terminal config" merge
+
+# cmux config. Not mergeable: cmux.json holds app preferences and custom
+# commands that cannot be concatenated.
+if check_app "cmux" || check_installed cmux; then
+    apply_config "$DENDRITE_DIR/configs/cmux/cmux.json" \
+                 "$HOME/.config/cmux/cmux.json" \
+                 "cmux config"
 fi
 
-# cmux config
-# Asked before overwriting: cmux.json holds app preferences and custom commands
-# that cannot be merged automatically. Piped installs have no stdin to answer
-# with, so there the existing config is left alone.
-CMUX_CONFIG="$HOME/.config/cmux/cmux.json"
-if [ -f "$DENDRITE_DIR/configs/cmux/cmux.json" ] && { check_app "cmux" || check_installed cmux; }; then
-    mkdir -p "$HOME/.config/cmux"
-    if [ -f "$CMUX_CONFIG" ]; then
-        echo ""
-        info "Existing cmux config found (~/.config/cmux/cmux.json)."
-        if [ -t 0 ]; then
-            read -p "  Overwrite? (y/N): " cmux_choice
-        else
-            cmux_choice="n"
-            warn "Non-interactive install - keeping your config"
-        fi
-        case "$cmux_choice" in
-            y|Y)
-                backup_config "$CMUX_CONFIG"
-                cp "$DENDRITE_DIR/configs/cmux/cmux.json" "$CMUX_CONFIG"
-                success "cmux config applied"
-                ;;
-            *)
-                warn "cmux config skipped - yours is untouched"
-                warn "Dendrite's version: $DENDRITE_DIR/configs/cmux/cmux.json"
-                ;;
-        esac
-    else
-        cp "$DENDRITE_DIR/configs/cmux/cmux.json" "$CMUX_CONFIG"
-        success "cmux config applied"
-    fi
-fi
+apply_config "$DENDRITE_DIR/configs/starship/starship.toml" \
+             "$HOME/.config/starship.toml" \
+             "Starship config"
 
-# Starship config
-STARSHIP_CONFIG="$HOME/.config/starship.toml"
-if [ -f "$DENDRITE_DIR/configs/starship/starship.toml" ]; then
-    mkdir -p "$HOME/.config"
-    if [ -f "$STARSHIP_CONFIG" ]; then
-        backup_config "$STARSHIP_CONFIG"
-    fi
-    cp "$DENDRITE_DIR/configs/starship/starship.toml" "$STARSHIP_CONFIG"
-    success "Starship config applied"
-fi
-
-# Lazygit config
-LAZYGIT_CONFIG="$HOME/Library/Application Support/lazygit/config.yml"
-if [ -f "$DENDRITE_DIR/configs/lazygit/config.yml" ]; then
-    mkdir -p "$HOME/Library/Application Support/lazygit"
-    if [ -f "$LAZYGIT_CONFIG" ]; then
-        backup_config "$LAZYGIT_CONFIG"
-    fi
-    cp "$DENDRITE_DIR/configs/lazygit/config.yml" "$LAZYGIT_CONFIG"
-    success "Lazygit config applied"
-fi
+apply_config "$DENDRITE_DIR/configs/lazygit/config.yml" \
+             "$HOME/Library/Application Support/lazygit/config.yml" \
+             "Lazygit config"
 
 
 # ─────────────────────────────────────────
