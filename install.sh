@@ -98,9 +98,10 @@ success "macOS $MACOS_VERSION detected"
 
 # cmux requires macOS 14+. Below that, install the rest of the stack and point
 # the user at Ghostty, the fallback terminal.
+CMUX_UNSUPPORTED=0
 if [ "$MACOS_MAJOR" -lt 14 ] 2>/dev/null; then
-    warn "cmux requires macOS 14 or later - it will be skipped"
-    warn "Use Ghostty instead: brew install --cask ghostty"
+    warn "cmux requires macOS 14 or later - installing Ghostty instead"
+    CMUX_UNSUPPORTED=1
     SKIP_TOOLS="$SKIP_TOOLS cmux"
 fi
 
@@ -223,7 +224,14 @@ if ! should_skip "herdr" && ! check_installed herdr; then
     warn "herdr - or use the official installer: curl -fsSL https://herdr.dev/install.sh | sh"
 fi
 
-if ! should_skip "cmux" && ! check_installed cmux; then
+if [ "$CMUX_UNSUPPORTED" = "1" ]; then
+    if check_installed ghostty; then
+        success "Ghostty (fallback terminal) - already installed"
+    else
+        info "Installing Ghostty (fallback terminal)..."
+        brew install --cask ghostty 2>/dev/null || warn "Failed to install ghostty"
+    fi
+elif ! should_skip "cmux" && ! check_installed cmux; then
     warn "cmux - or download the DMG from https://cmux.com"
 fi
 
@@ -286,7 +294,12 @@ if [ -f "$DENDRITE_DIR/configs/ghostty/config" ]; then
     if [ -f "$GHOSTTY_CONFIG" ]; then
         echo ""
         info "Existing terminal config found (~/.config/ghostty/config)."
-        read -p "  Overwrite? (y/N/merge): " ghostty_choice
+        if [ -t 0 ]; then
+            read -p "  Overwrite? (y/N/merge): " ghostty_choice
+        else
+            ghostty_choice="n"
+            warn "Non-interactive install - keeping your config"
+        fi
         case "$ghostty_choice" in
             y|Y)
                 backup_config "$GHOSTTY_CONFIG"
@@ -310,14 +323,20 @@ fi
 
 # cmux config
 # Asked before overwriting: cmux.json holds app preferences and custom commands
-# that cannot be merged automatically.
+# that cannot be merged automatically. Piped installs have no stdin to answer
+# with, so there the existing config is left alone.
 CMUX_CONFIG="$HOME/.config/cmux/cmux.json"
-if [ -f "$DENDRITE_DIR/configs/cmux/cmux.json" ]; then
+if [ -f "$DENDRITE_DIR/configs/cmux/cmux.json" ] && ! should_skip cmux; then
     mkdir -p "$HOME/.config/cmux"
     if [ -f "$CMUX_CONFIG" ]; then
         echo ""
         info "Existing cmux config found (~/.config/cmux/cmux.json)."
-        read -p "  Overwrite? (y/N): " cmux_choice
+        if [ -t 0 ]; then
+            read -p "  Overwrite? (y/N): " cmux_choice
+        else
+            cmux_choice="n"
+            warn "Non-interactive install - keeping your config"
+        fi
         case "$cmux_choice" in
             y|Y)
                 backup_config "$CMUX_CONFIG"
@@ -326,6 +345,7 @@ if [ -f "$DENDRITE_DIR/configs/cmux/cmux.json" ]; then
                 ;;
             *)
                 warn "cmux config skipped - yours is untouched"
+                warn "Dendrite's version: $DENDRITE_DIR/configs/cmux/cmux.json"
                 ;;
         esac
     else
@@ -446,7 +466,11 @@ verify_tool() {
     fi
 }
 
-verify_tool "cmux" "cmux"
+if should_skip cmux; then
+    verify_tool "Ghostty (fallback)" "ghostty"
+else
+    verify_tool "cmux" "cmux"
+fi
 verify_tool "Herdr" "herdr"
 verify_tool "Neovim" "nvim"
 verify_tool "Lazygit" "lazygit"
@@ -472,6 +496,17 @@ echo ""
 echo -e "  ${BOLD}Next steps:${RESET}"
 echo ""
 echo "  1. Restart your terminal (or run: source $SHELL_RC)"
+
+if should_skip cmux; then
+echo "  2. Open Ghostty (cmux was skipped)"
+echo "  3. Build the multi-agent layout:"
+echo ""
+echo "     Cmd+Shift+Right     Split right"
+echo "     Cmd+Shift+Down      Split down"
+echo "     Cmd+Arrow           Navigate splits"
+echo "     Cmd+Shift+E         Equalize splits"
+echo ""
+else
 echo "  2. Open cmux"
 echo "  3. One workspace per task, one agent per workspace:"
 echo ""
@@ -482,6 +517,7 @@ echo "     Cmd+Shift+D         Split down"
 echo "     Opt+Cmd+Arrow       Focus another pane"
 echo "     Cmd+I               Notifications (agent waiting on you)"
 echo ""
+fi
 echo "  4. In each pane:"
 echo ""
 echo "     Pane 1:   claude             # Agent 1"

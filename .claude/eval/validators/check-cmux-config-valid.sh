@@ -25,9 +25,36 @@ except json.JSONDecodeError as e:
     print(f'FAIL: $FILE is not valid JSONC: {e}')
     sys.exit(1)
 
-if 'schemaVersion' not in config:
-    print('FAIL: $FILE missing schemaVersion')
+# Shape of what Dendrite ships. cmux publishes a full JSON schema, but fetching
+# it would make the eval suite depend on the network.
+EXPECTED = {
+    'schemaVersion': int,
+    'app': dict,
+    'terminal': dict,
+    'browser': dict,
+}
+BOOLS = [
+    ('terminal', 'copyOnSelect'),
+    ('terminal', 'showScrollBar'),
+    ('browser', 'openTerminalLinksInCmuxBrowser'),
+]
+
+errors = []
+for key, expected_type in EXPECTED.items():
+    if key not in config:
+        errors.append(f'missing key: {key}')
+    elif not isinstance(config[key], expected_type):
+        errors.append(f'{key} must be {expected_type.__name__}, got {type(config[key]).__name__}')
+
+for section, key in BOOLS:
+    value = config.get(section)
+    if isinstance(value, dict) and key in value and not isinstance(value[key], bool):
+        errors.append(f'{section}.{key} must be a boolean')
+
+if errors:
+    for e in errors:
+        print(f'FAIL: $FILE {e}')
     sys.exit(1)
 
-print('PASS: $FILE is valid JSONC')
+print('PASS: $FILE is valid JSONC with the expected shape')
 "

@@ -44,6 +44,15 @@
       "passed": 24,
       "failed": 0,
       "mode": "full"
+    },
+    {
+      "date": "2026-08-08",
+      "run_id": "eval-2026-08-08T14-34-49",
+      "score": 1.0,
+      "total": 24,
+      "passed": 24,
+      "failed": 0,
+      "mode": "full"
     }
   ],
   "best_score": 1.0,
