@@ -59,6 +59,12 @@ check_app() {
     [ -d "/Applications/$1.app" ] || [ -d "$HOME/Applications/$1.app" ]
 }
 
+# A cask can be installed as an .app with no CLI linked, so re-running the
+# installer must not treat that as missing.
+tool_present() {
+    check_installed "$1" || { [ "$2" = "cask" ] && check_app "$1"; }
+}
+
 backup_config() {
     local file="$1"
     if [ -f "$file" ]; then
@@ -205,7 +211,7 @@ while [ $i -lt ${#TOOL_CMDS[@]} ]; do
     if should_skip "$cmd"; then
         warn "$desc ($cmd) - skipped"
         skipped_count=$((skipped_count + 1))
-    elif check_installed "$cmd"; then
+    elif tool_present "$cmd" "$type"; then
         success "$desc ($cmd) - already installed"
         skipped_count=$((skipped_count + 1))
     else
@@ -216,7 +222,7 @@ while [ $i -lt ${#TOOL_CMDS[@]} ]; do
             brew install "$pkg" 2>/dev/null || warn "Failed to install $pkg"
         fi
 
-        if check_installed "$cmd"; then
+        if tool_present "$cmd" "$type"; then
             success "$desc ($cmd) - installed"
             installed_count=$((installed_count + 1))
         else
