@@ -91,7 +91,18 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     error "Dendrite currently supports macOS only."
     exit 1
 fi
-success "macOS detected"
+
+MACOS_VERSION="$(sw_vers -productVersion 2>/dev/null || echo 0)"
+MACOS_MAJOR="${MACOS_VERSION%%.*}"
+success "macOS $MACOS_VERSION detected"
+
+# cmux requires macOS 14+. Below that, install the rest of the stack and point
+# the user at Ghostty, the fallback terminal.
+if [ "$MACOS_MAJOR" -lt 14 ] 2>/dev/null; then
+    warn "cmux requires macOS 14 or later - it will be skipped"
+    warn "Use Ghostty instead: brew install --cask ghostty"
+    SKIP_TOOLS="$SKIP_TOOLS cmux"
+fi
 
 # ─────────────────────────────────────────
 # Step 2: Clone or update Dendrite repo
@@ -185,7 +196,7 @@ while [ $i -lt ${#TOOL_CMDS[@]} ]; do
     desc="${TOOL_DESCS[$i]}"
 
     if should_skip "$cmd"; then
-        warn "$desc ($cmd) - skipped by user"
+        warn "$desc ($cmd) - skipped"
         skipped_count=$((skipped_count + 1))
     elif check_installed "$cmd"; then
         success "$desc ($cmd) - already installed"
@@ -298,14 +309,29 @@ if [ -f "$DENDRITE_DIR/configs/ghostty/config" ]; then
 fi
 
 # cmux config
+# Asked before overwriting: cmux.json holds app preferences and custom commands
+# that cannot be merged automatically.
 CMUX_CONFIG="$HOME/.config/cmux/cmux.json"
 if [ -f "$DENDRITE_DIR/configs/cmux/cmux.json" ]; then
     mkdir -p "$HOME/.config/cmux"
     if [ -f "$CMUX_CONFIG" ]; then
-        backup_config "$CMUX_CONFIG"
+        echo ""
+        info "Existing cmux config found (~/.config/cmux/cmux.json)."
+        read -p "  Overwrite? (y/N): " cmux_choice
+        case "$cmux_choice" in
+            y|Y)
+                backup_config "$CMUX_CONFIG"
+                cp "$DENDRITE_DIR/configs/cmux/cmux.json" "$CMUX_CONFIG"
+                success "cmux config applied"
+                ;;
+            *)
+                warn "cmux config skipped - yours is untouched"
+                ;;
+        esac
+    else
+        cp "$DENDRITE_DIR/configs/cmux/cmux.json" "$CMUX_CONFIG"
+        success "cmux config applied"
     fi
-    cp "$DENDRITE_DIR/configs/cmux/cmux.json" "$CMUX_CONFIG"
-    success "cmux config applied"
 fi
 
 # Starship config

@@ -2,7 +2,8 @@
 
 ## Prerequisites
 
-- macOS 14 or later (Apple Silicon or Intel) — cmux requires it
+- macOS (Apple Silicon or Intel). cmux needs macOS 14 or later; on anything older
+  the installer skips it and you use Ghostty as the terminal
 - [Homebrew](https://brew.sh/) installed
 - A terminal (Dendrite will install cmux for you)
 

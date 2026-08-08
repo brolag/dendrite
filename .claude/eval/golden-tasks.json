@@ -231,6 +231,18 @@
       }
     },
     {
+      "id": "config-004",
+      "name": "cmux-config-valid",
+      "description": "cmux config must exist and be valid JSONC",
+      "tags": ["config", "critical"],
+      "difficulty": "easy",
+      "type": "script",
+      "phase": "pass_to_pass",
+      "test": {
+        "script": ".claude/eval/validators/check-cmux-config-valid.sh"
+      }
+    },
+    {
       "id": "html-001",
       "name": "index-html-exists",
       "description": "Landing page HTML must exist",

@@ -307,7 +307,11 @@ Q: Will this mess up my existing configs?
 A: No. Everything is backed up before changes. You'll be asked before overwriting.
 
 Q: Does this work on Linux?
-A: macOS only for now. cmux needs macOS 14+. Linux support is planned.
+A: macOS only for now. Linux support is planned.
+
+Q: I'm on macOS 13 or older.
+A: Everything installs except cmux, which needs macOS 14+. The installer detects
+   this, skips it and tells you to install Ghostty instead.
 
 Q: Why cmux instead of Ghostty?
 A: cmux is built on Ghostty and adds what agent work needs: a workspace per task,
