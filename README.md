@@ -304,7 +304,10 @@ Q: Do I need all these tools?
 A: The installer skips what you already have. But they work best together.
 
 Q: Will this mess up my existing configs?
-A: No. Everything is backed up before changes. You'll be asked before overwriting.
+A: Everything is backed up before changes, next to the original as
+   <name>.dendrite-backup.<timestamp>. Terminal and cmux configs ask before
+   overwriting and are never touched in a piped install. Starship and Lazygit
+   configs are replaced after backup.
 
 Q: Does this work on Linux?
 A: macOS only for now. Linux support is planned.

@@ -53,6 +53,12 @@ check_installed() {
     command -v "$1" &> /dev/null
 }
 
+# Terminals ship as .app bundles. cmux links a CLI, Ghostty does not, so
+# command -v is not a reliable check for either one.
+check_app() {
+    [ -d "/Applications/$1.app" ] || [ -d "$HOME/Applications/$1.app" ]
+}
+
 backup_config() {
     local file="$1"
     if [ -f "$file" ]; then
@@ -225,13 +231,13 @@ if ! should_skip "herdr" && ! check_installed herdr; then
 fi
 
 if [ "$CMUX_UNSUPPORTED" = "1" ]; then
-    if check_installed ghostty; then
+    if check_app "Ghostty"; then
         success "Ghostty (fallback terminal) - already installed"
     else
         info "Installing Ghostty (fallback terminal)..."
         brew install --cask ghostty 2>/dev/null || warn "Failed to install ghostty"
     fi
-elif ! should_skip "cmux" && ! check_installed cmux; then
+elif ! should_skip "cmux" && ! check_installed cmux && ! check_app "cmux"; then
     warn "cmux - or download the DMG from https://cmux.com"
 fi
 
@@ -326,7 +332,7 @@ fi
 # that cannot be merged automatically. Piped installs have no stdin to answer
 # with, so there the existing config is left alone.
 CMUX_CONFIG="$HOME/.config/cmux/cmux.json"
-if [ -f "$DENDRITE_DIR/configs/cmux/cmux.json" ] && ! should_skip cmux; then
+if [ -f "$DENDRITE_DIR/configs/cmux/cmux.json" ] && { check_app "cmux" || check_installed cmux; }; then
     mkdir -p "$HOME/.config/cmux"
     if [ -f "$CMUX_CONFIG" ]; then
         echo ""
@@ -466,10 +472,20 @@ verify_tool() {
     fi
 }
 
+verify_app() {
+    local name="$1"
+    local app="$2"
+    if check_app "$app"; then
+        printf "  %-20s ${GREEN}%-12s${RESET} %-10s\n" "$name" "installed" "$app.app"
+    else
+        printf "  %-20s ${RED}%-12s${RESET} %-10s\n" "$name" "missing" "$app.app"
+    fi
+}
+
 if should_skip cmux; then
-    verify_tool "Ghostty (fallback)" "ghostty"
+    verify_app "Ghostty (fallback)" "Ghostty"
 else
-    verify_tool "cmux" "cmux"
+    verify_app "cmux" "cmux"
 fi
 verify_tool "Herdr" "herdr"
 verify_tool "Neovim" "nvim"
@@ -497,8 +513,9 @@ echo -e "  ${BOLD}Next steps:${RESET}"
 echo ""
 echo "  1. Restart your terminal (or run: source $SHELL_RC)"
 
-if should_skip cmux; then
-echo "  2. Open Ghostty (cmux was skipped)"
+if ! check_app "cmux" && ! check_installed cmux; then
+    if check_app "Ghostty"; then
+echo "  2. Open Ghostty (cmux is not installed)"
 echo "  3. Build the multi-agent layout:"
 echo ""
 echo "     Cmd+Shift+Right     Split right"
@@ -506,6 +523,15 @@ echo "     Cmd+Shift+Down      Split down"
 echo "     Cmd+Arrow           Navigate splits"
 echo "     Cmd+Shift+E         Equalize splits"
 echo ""
+    else
+echo "  2. No Dendrite terminal is installed. Use your own, or install one:"
+echo ""
+echo "     brew install --cask cmux       # the agent terminal, macOS 14+"
+echo "     brew install --cask ghostty    # the general-purpose fallback"
+echo ""
+echo "  3. Everything else in the stack works in any terminal."
+echo ""
+    fi
 else
 echo "  2. Open cmux"
 echo "  3. One workspace per task, one agent per workspace:"
